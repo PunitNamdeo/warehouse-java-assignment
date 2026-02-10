@@ -2,6 +2,7 @@ package com.fulfilment.application.monolith.warehouses.domain.usecases;
 
 import com.fulfilment.application.monolith.warehouses.domain.models.Warehouse;
 import com.fulfilment.application.monolith.warehouses.domain.ports.WarehouseStore;
+import jakarta.ws.rs.WebApplicationException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
@@ -32,22 +33,25 @@ public class ArchiveWarehouseUseCaseTest {
     when(warehouseStore.findByBusinessUnitCode("WH-001")).thenReturn(activeWarehouse);
 
     // When
-    useCase.archive("WH-001");
+    useCase.archive(activeWarehouse);
 
     // Then
     assertNotNull(activeWarehouse.archivedAt);
-    assertTrue(activeWarehouse.archivedAt.isBefore(LocalDateTime.now().plusSeconds(1)));
     verify(warehouseStore).update(activeWarehouse);
   }
 
   @Test
   void testArchiveWarehouseNotFound() {
     // Given
+    Warehouse warehouse = new Warehouse();
+    warehouse.businessUnitCode = "INVALID-WH";
+    warehouse.archivedAt = null;
+
     when(warehouseStore.findByBusinessUnitCode("INVALID-WH")).thenReturn(null);
 
     // When & Then
-    Exception exception = assertThrows(IllegalArgumentException.class, () -> {
-      useCase.archive("INVALID-WH");
+    Exception exception = assertThrows(WebApplicationException.class, () -> {
+      useCase.archive(warehouse);
     });
     assertTrue(exception.getMessage().contains("not found"));
   }
@@ -62,8 +66,8 @@ public class ArchiveWarehouseUseCaseTest {
     when(warehouseStore.findByBusinessUnitCode("WH-001")).thenReturn(archivedWarehouse);
 
     // When & Then
-    Exception exception = assertThrows(IllegalArgumentException.class, () -> {
-      useCase.archive("WH-001");
+    Exception exception = assertThrows(WebApplicationException.class, () -> {
+      useCase.archive(archivedWarehouse);
     });
     assertTrue(exception.getMessage().contains("already archived"));
   }

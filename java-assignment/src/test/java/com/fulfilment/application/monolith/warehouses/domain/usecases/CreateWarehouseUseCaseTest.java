@@ -1,9 +1,10 @@
 package com.fulfilment.application.monolith.warehouses.domain.usecases;
 
-import com.fulfilment.application.monolith.location.LocationGateway;
 import com.fulfilment.application.monolith.warehouses.domain.models.Location;
 import com.fulfilment.application.monolith.warehouses.domain.models.Warehouse;
+import com.fulfilment.application.monolith.warehouses.domain.ports.LocationResolver;
 import com.fulfilment.application.monolith.warehouses.domain.ports.WarehouseStore;
+import jakarta.ws.rs.WebApplicationException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
@@ -13,46 +14,52 @@ public class CreateWarehouseUseCaseTest {
 
   private CreateWarehouseUseCase useCase;
   private WarehouseStore warehouseStore;
-  private LocationGateway locationGateway;
+  private LocationResolver locationResolver;
 
   @BeforeEach
   void setup() {
     warehouseStore = mock(WarehouseStore.class);
-    locationGateway = mock(LocationGateway.class);
-    useCase = new CreateWarehouseUseCase(warehouseStore, locationGateway);
+    locationResolver = mock(LocationResolver.class);
+    useCase = new CreateWarehouseUseCase(warehouseStore, locationResolver);
   }
 
   @Test
   void testCreateWarehouseSuccess() {
     // Given
-    Location validLocation = new Location();
-    validLocation.identification = "ZWOLLE-001";
-    validLocation.maximumCapacity = 500;
+    Location validLocation = new Location("ZWOLLE-001", 2, 500);
+    Warehouse warehouse = new Warehouse();
+    warehouse.businessUnitCode = "WH-001";
+    warehouse.stock = 100;
+    warehouse.capacity = 200;
+    warehouse.location = "ZWOLLE-001";
     
-    when(locationGateway.resolveByIdentifier("ZWOLLE-001")).thenReturn(validLocation);
+    when(locationResolver.resolveByIdentifier("ZWOLLE-001")).thenReturn(validLocation);
     when(warehouseStore.findByBusinessUnitCode("WH-001")).thenReturn(null);
+    when(warehouseStore.getAll()).thenReturn(java.util.List.of());
 
     // When
-    Warehouse result = useCase.create("WH-001", 100, 200, "ZWOLLE-001");
+    useCase.create(warehouse);
 
     // Then
-    assertNotNull(result);
-    assertEquals("WH-001", result.businessUnitCode);
-    assertEquals(100, result.stock);
-    assertEquals(200, result.capacity);
-    assertEquals("ZWOLLE-001", result.location);
-    assertNull(result.archivedAt);
-    verify(warehouseStore).create(result);
+    assertNotNull(warehouse.createdAt);
+    assertNull(warehouse.archivedAt);
+    verify(warehouseStore).create(warehouse);
   }
 
   @Test
   void testCreateWarehouseLocationNotFound() {
     // Given
-    when(locationGateway.resolveByIdentifier("INVALID-LOC")).thenReturn(null);
+    Warehouse warehouse = new Warehouse();
+    warehouse.businessUnitCode = "WH-001";
+    warehouse.stock = 100;
+    warehouse.capacity = 200;
+    warehouse.location = "INVALID-LOC";
+    
+    when(locationResolver.resolveByIdentifier("INVALID-LOC")).thenReturn(null);
 
     // When & Then
-    Exception exception = assertThrows(IllegalArgumentException.class, () -> {
-      useCase.create("WH-001", 100, 200, "INVALID-LOC");
+    Exception exception = assertThrows(WebApplicationException.class, () -> {
+      useCase.create(warehouse);
     });
     assertTrue(exception.getMessage().contains("Location"));
   }
@@ -60,19 +67,21 @@ public class CreateWarehouseUseCaseTest {
   @Test
   void testCreateWarehouseDuplicateBusinessUnitCode() {
     // Given
-    Location validLocation = new Location();
-    validLocation.identification = "ZWOLLE-001";
-    validLocation.maximumCapacity = 500;
+    Location validLocation = new Location("ZWOLLE-001", 2, 500);
+    Warehouse warehouse = new Warehouse();
+    warehouse.businessUnitCode = "WH-001";
+    warehouse.stock = 100;
+    warehouse.capacity = 200;
+    warehouse.location = "ZWOLLE-001";
     
     Warehouse existingWarehouse = new Warehouse();
     existingWarehouse.businessUnitCode = "WH-001";
     
-    when(locationGateway.resolveByIdentifier("ZWOLLE-001")).thenReturn(validLocation);
     when(warehouseStore.findByBusinessUnitCode("WH-001")).thenReturn(existingWarehouse);
 
     // When & Then
-    Exception exception = assertThrows(IllegalArgumentException.class, () -> {
-      useCase.create("WH-001", 100, 200, "ZWOLLE-001");
+    Exception exception = assertThrows(WebApplicationException.class, () -> {
+      useCase.create(warehouse);
     });
     assertTrue(exception.getMessage().contains("already exists"));
   }
@@ -80,16 +89,19 @@ public class CreateWarehouseUseCaseTest {
   @Test
   void testCreateWarehouseCapacityExceedsLocationMax() {
     // Given
-    Location validLocation = new Location();
-    validLocation.identification = "ZWOLLE-001";
-    validLocation.maximumCapacity = 100; // Max capacity is 100
+    Location validLocation = new Location("ZWOLLE-001", 1, 100); // Max capacity is 100
+    Warehouse warehouse = new Warehouse();
+    warehouse.businessUnitCode = "WH-001";
+    warehouse.stock = 50;
+    warehouse.capacity = 200; // Exceeds location max of 100
+    warehouse.location = "ZWOLLE-001";
     
-    when(locationGateway.resolveByIdentifier("ZWOLLE-001")).thenReturn(validLocation);
+    when(locationResolver.resolveByIdentifier("ZWOLLE-001")).thenReturn(validLocation);
     when(warehouseStore.findByBusinessUnitCode("WH-001")).thenReturn(null);
 
-    // When & Then - Capacity 200 exceeds location max 100
-    Exception exception = assertThrows(IllegalArgumentException.class, () -> {
-      useCase.create("WH-001", 150, 200, "ZWOLLE-001");
+    // When & Then
+    Exception exception = assertThrows(WebApplicationException.class, () -> {
+      useCase.create(warehouse);
     });
     assertTrue(exception.getMessage().contains("capacity"));
   }
@@ -97,16 +109,19 @@ public class CreateWarehouseUseCaseTest {
   @Test
   void testCreateWarehouseStockExceedsCapacity() {
     // Given
-    Location validLocation = new Location();
-    validLocation.identification = "ZWOLLE-001";
-    validLocation.maximumCapacity = 500;
+    Location validLocation = new Location("ZWOLLE-001", 1, 500);
+    Warehouse warehouse = new Warehouse();
+    warehouse.businessUnitCode = "WH-001";
+    warehouse.stock = 300; // Exceeds capacity
+    warehouse.capacity = 200;
+    warehouse.location = "ZWOLLE-001";
     
-    when(locationGateway.resolveByIdentifier("ZWOLLE-001")).thenReturn(validLocation);
+    when(locationResolver.resolveByIdentifier("ZWOLLE-001")).thenReturn(validLocation);
     when(warehouseStore.findByBusinessUnitCode("WH-001")).thenReturn(null);
 
-    // When & Then - Stock 300 exceeds capacity 200
-    Exception exception = assertThrows(IllegalArgumentException.class, () -> {
-      useCase.create("WH-001", 300, 200, "ZWOLLE-001");
+    // When & Then
+    Exception exception = assertThrows(WebApplicationException.class, () -> {
+      useCase.create(warehouse);
     });
     assertTrue(exception.getMessage().contains("stock"));
   }
