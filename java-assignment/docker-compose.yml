@@ -27,7 +27,7 @@ services:
     container_name: warehouse-app
     working_dir: /app
     volumes:
-      - ./target/java-code-assignment-1.0.0-SNAPSHOT-runner.jar:/app/app.jar
+      - ./target/java-code-assignment-1.0.0-SNAPSHOT.jar:/app/app.jar
     ports:
       - "8080:8080"
     environment:

@@ -35,7 +35,7 @@ echo   ✓ Build completed successfully
 REM Step 3: Check JAR file
 echo.
 echo [STEP 3] Verifying JAR creation...
-if not exist "target\java-code-assignment-1.0.0-SNAPSHOT-runner.jar" (
+if not exist "target\java-code-assignment-1.0.0-SNAPSHOT.jar" (
     echo ERROR: JAR file not found
     pause
     exit /b 1
