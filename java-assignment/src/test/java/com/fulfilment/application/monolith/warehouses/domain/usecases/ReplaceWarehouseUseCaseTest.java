@@ -27,7 +27,7 @@ public class ReplaceWarehouseUseCaseTest {
   void testReplaceWarehouseSuccess() {
     // Given
     Warehouse oldWarehouse = new Warehouse();
-    oldWarehouse.businessUnitCode = "WH-OLD";
+    oldWarehouse.businessUnitCode = "WH-001";
     oldWarehouse.stock = 100;
     oldWarehouse.capacity = 200;
     oldWarehouse.location = "ZWOLLE-001";
@@ -36,14 +36,13 @@ public class ReplaceWarehouseUseCaseTest {
     Location newLocation = new Location("AMSTERDAM-001", 5, 500);
 
     Warehouse newWarehouse = new Warehouse();
-    newWarehouse.businessUnitCode = "WH-NEW";
+    newWarehouse.businessUnitCode = "WH-001";
     newWarehouse.stock = 100;
     newWarehouse.capacity = 250;
     newWarehouse.location = "AMSTERDAM-001";
 
-    when(warehouseStore.findByBusinessUnitCode("WH-OLD")).thenReturn(oldWarehouse);
+    when(warehouseStore.findByBusinessUnitCode("WH-001")).thenReturn(oldWarehouse);
     when(locationResolver.resolveByIdentifier("AMSTERDAM-001")).thenReturn(newLocation);
-    when(warehouseStore.findByBusinessUnitCode("WH-NEW")).thenReturn(null);
     when(warehouseStore.getAll()).thenReturn(java.util.List.of());
 
     // When
@@ -59,12 +58,12 @@ public class ReplaceWarehouseUseCaseTest {
   void testReplaceWarehouseNotFound() {
     // Given
     Warehouse newWarehouse = new Warehouse();
-    newWarehouse.businessUnitCode = "WH-NEW";
+    newWarehouse.businessUnitCode = "WH-001";
     newWarehouse.stock = 100;
     newWarehouse.capacity = 200;
     newWarehouse.location = "ZWOLLE-001";
 
-    when(warehouseStore.findByBusinessUnitCode("WH-OLD")).thenReturn(null);
+    when(warehouseStore.findByBusinessUnitCode("WH-001")).thenReturn(null);
 
     // When & Then
     Exception exception = assertThrows(WebApplicationException.class, () -> {
@@ -77,17 +76,17 @@ public class ReplaceWarehouseUseCaseTest {
   void testReplaceWarehouseStockMismatch() {
     // Given
     Warehouse oldWarehouse = new Warehouse();
-    oldWarehouse.businessUnitCode = "WH-OLD";
+    oldWarehouse.businessUnitCode = "WH-001";
     oldWarehouse.stock = 100;
     oldWarehouse.capacity = 200;
 
     Warehouse newWarehouse = new Warehouse();
-    newWarehouse.businessUnitCode = "WH-NEW";
+    newWarehouse.businessUnitCode = "WH-001";
     newWarehouse.stock = 150;
     newWarehouse.capacity = 200;
     newWarehouse.location = "ZWOLLE-001";
 
-    when(warehouseStore.findByBusinessUnitCode("WH-OLD")).thenReturn(oldWarehouse);
+    when(warehouseStore.findByBusinessUnitCode("WH-001")).thenReturn(oldWarehouse);
 
     // When & Then
     Exception exception = assertThrows(WebApplicationException.class, () -> {
@@ -100,19 +99,19 @@ public class ReplaceWarehouseUseCaseTest {
   void testReplaceWarehouseNewCapacityTooSmall() {
     // Given
     Warehouse oldWarehouse = new Warehouse();
-    oldWarehouse.businessUnitCode = "WH-OLD";
+    oldWarehouse.businessUnitCode = "WH-001";
     oldWarehouse.stock = 100;
     oldWarehouse.capacity = 200;
 
     Location newLocation = new Location("AMSTERDAM-001", 5, 500);
 
     Warehouse newWarehouse = new Warehouse();
-    newWarehouse.businessUnitCode = "WH-NEW";
+    newWarehouse.businessUnitCode = "WH-001";
     newWarehouse.stock = 100;
     newWarehouse.capacity = 50;
     newWarehouse.location = "AMSTERDAM-001";
 
-    when(warehouseStore.findByBusinessUnitCode("WH-OLD")).thenReturn(oldWarehouse);
+    when(warehouseStore.findByBusinessUnitCode("WH-001")).thenReturn(oldWarehouse);
     when(locationResolver.resolveByIdentifier("AMSTERDAM-001")).thenReturn(newLocation);
 
     // When & Then
