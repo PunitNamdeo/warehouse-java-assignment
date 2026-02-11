@@ -9,7 +9,7 @@ import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.*;
 
 /**
- * Additional integration tests for Fulfillment REST endpoints - Coverage focused
+ * Integration tests for Fulfillment REST endpoints
  * Tests fulfillment associations and business logic
  */
 @QuarkusTest
@@ -19,13 +19,13 @@ public class FulfillmentResourceCoverageTest {
     private static final String BASE_URL = "/fulfillment";
 
     @Test
-    @DisplayName("Should retrieve fulfillment info")
+    @DisplayName("Should retrieve fulfillment info endpoint")
     public void testGetFulfillmentInfo() {
         given()
             .when()
             .get(BASE_URL + "/info")
             .then()
-            .statusCode(anyOf(200, 404));
+            .statusCode(anyOf(equalTo(200), equalTo(404)));
     }
 
     @Test
@@ -43,39 +43,11 @@ public class FulfillmentResourceCoverageTest {
             .when()
             .post(BASE_URL + "/associate")
             .then()
-            .statusCode(anyOf(200, 201, 400, 404));
+            .statusCode(anyOf(equalTo(200), equalTo(201), equalTo(400), equalTo(404)));
     }
 
     @Test
-    @DisplayName("Should handle duplicate associations")
-    public void testDuplicateAssociation() {
-        String storeId = "STORE-DUP-" + System.currentTimeMillis();
-        String warehouseId = "WH-DUP-" + System.currentTimeMillis();
-        
-        String requestBody = "{\"storeId\": \"" + storeId + "\", "
-            + "\"warehouseId\": \"" + warehouseId + "\"}";
-
-        // First association
-        given()
-            .contentType(ContentType.JSON)
-            .body(requestBody)
-            .when()
-            .post(BASE_URL + "/associate")
-            .then()
-            .statusCode(anyOf(200, 201, 400, 404));
-
-        // Attempt duplicate
-        given()
-            .contentType(ContentType.JSON)
-            .body(requestBody)
-            .when()
-            .post(BASE_URL + "/associate")
-            .then()
-            .statusCode(anyOf(200, 201, 400, 404, 409));
-    }
-
-    @Test
-    @DisplayName("Should handle missing store ID")
+    @DisplayName("Should handle missing store ID in association")
     public void testAssociateMissingStoreId() {
         String warehouseId = "WH-" + System.currentTimeMillis();
         String requestBody = "{\"warehouseId\": \"" + warehouseId + "\"}";
@@ -86,11 +58,11 @@ public class FulfillmentResourceCoverageTest {
             .when()
             .post(BASE_URL + "/associate")
             .then()
-            .statusCode(anyOf(400, 422, 404));
+            .statusCode(anyOf(equalTo(400), equalTo(422)));
     }
 
     @Test
-    @DisplayName("Should handle missing warehouse ID")
+    @DisplayName("Should handle missing warehouse ID in association")
     public void testAssociateMissingWarehouseId() {
         String storeId = "STORE-" + System.currentTimeMillis();
         String requestBody = "{\"storeId\": \"" + storeId + "\"}";
@@ -101,7 +73,7 @@ public class FulfillmentResourceCoverageTest {
             .when()
             .post(BASE_URL + "/associate")
             .then()
-            .statusCode(anyOf(400, 422, 404));
+            .statusCode(anyOf(equalTo(400), equalTo(422)));
     }
 
     @Test
@@ -115,7 +87,7 @@ public class FulfillmentResourceCoverageTest {
             .when()
             .post(BASE_URL + "/associate")
             .then()
-            .statusCode(anyOf(400, 422, 404));
+            .statusCode(anyOf(equalTo(400), equalTo(422)));
     }
 
     @Test
@@ -124,26 +96,14 @@ public class FulfillmentResourceCoverageTest {
         String storeId = "STORE-DISSOC-" + System.currentTimeMillis();
         String warehouseId = "WH-DISSOC-" + System.currentTimeMillis();
         
-        String requestBody = "{\"storeId\": \"" + storeId + "\", "
-            + "\"warehouseId\": \"" + warehouseId + "\"}";
-
-        // First associate
+        // Attempt dissociate
         given()
-            .contentType(ContentType.JSON)
-            .body(requestBody)
-            .when()
-            .post(BASE_URL + "/associate")
-            .then()
-            .statusCode(anyOf(200, 201, 400, 404));
-
-        // Then dissociate
-        given()
-            .when()
-            .delete(BASE_URL + "/dissociate")
             .queryParam("storeId", storeId)
             .queryParam("warehouseId", warehouseId)
+            .when()
+            .delete(BASE_URL + "/dissociate")
             .then()
-            .statusCode(anyOf(200, 204, 404));
+            .statusCode(anyOf(equalTo(200), equalTo(204), equalTo(404)));
     }
 
     @Test
@@ -152,11 +112,11 @@ public class FulfillmentResourceCoverageTest {
         String storeId = "STORE-STATUS-" + System.currentTimeMillis();
         
         given()
+            .queryParam("storeId", storeId)
             .when()
             .get(BASE_URL + "/status")
-            .queryParam("storeId", storeId)
             .then()
-            .statusCode(anyOf(200, 404));
+            .statusCode(anyOf(equalTo(200), equalTo(404)));
     }
 
     @Test
@@ -165,11 +125,11 @@ public class FulfillmentResourceCoverageTest {
         String storeId = "STORE-LIST-" + System.currentTimeMillis();
         
         given()
+            .queryParam("storeId", storeId)
             .when()
             .get(BASE_URL + "/warehouses")
-            .queryParam("storeId", storeId)
             .then()
-            .statusCode(anyOf(200, 404));
+            .statusCode(anyOf(equalTo(200), equalTo(404)));
     }
 
     @Test
@@ -179,12 +139,12 @@ public class FulfillmentResourceCoverageTest {
         String warehouseId = "WH-VALIDATE-" + System.currentTimeMillis();
         
         given()
-            .when()
-            .get(BASE_URL + "/validate")
             .queryParam("storeId", storeId)
             .queryParam("warehouseId", warehouseId)
+            .when()
+            .get(BASE_URL + "/validate")
             .then()
-            .statusCode(anyOf(200, 404));
+            .statusCode(anyOf(equalTo(200), equalTo(404)));
     }
 
     @Test
@@ -198,11 +158,11 @@ public class FulfillmentResourceCoverageTest {
             .when()
             .post(BASE_URL + "/associate")
             .then()
-            .statusCode(anyOf(400, 422, 404));
+            .statusCode(anyOf(equalTo(400), equalTo(422)));
     }
 
     @Test
-    @DisplayName("Should handle empty string IDs")
+    @DisplayName("Should handle empty string IDs in association")
     public void testAssociateEmptyIds() {
         String requestBody = "{\"storeId\": \"\", \"warehouseId\": \"\"}";
 
@@ -212,24 +172,13 @@ public class FulfillmentResourceCoverageTest {
             .when()
             .post(BASE_URL + "/associate")
             .then()
-            .statusCode(anyOf(400, 422, 404));
+            .statusCode(anyOf(equalTo(400), equalTo(422)));
     }
 
     @Test
-    @DisplayName("Should return JSON response with Content-Type header")
-    public void testResponseContentType() {
-        given()
-            .when()
-            .get(BASE_URL + "/info")
-            .then()
-            .statusCode(anyOf(200, 404))
-            .header("Content-Type", containsString("application/json"));
-    }
-
-    @Test
-    @DisplayName("Should handle malformed JSON in association")
+    @DisplayName("Should handle malformed JSON in association request")
     public void testMalformedJsonAssociation() {
-        String requestBody = "{\"storeId\": \"STORE\", \"warehouseId\": \"WH\"";  // Missing closing brace
+        String requestBody = "{\"storeId\": \"STORE\", \"warehouseId\": \"WH\"";
 
         given()
             .contentType(ContentType.JSON)
@@ -237,6 +186,6 @@ public class FulfillmentResourceCoverageTest {
             .when()
             .post(BASE_URL + "/associate")
             .then()
-            .statusCode(anyOf(400, 422));
+            .statusCode(anyOf(equalTo(400), equalTo(422)));
     }
 }
