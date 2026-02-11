@@ -34,8 +34,8 @@ public class LocationGatewayTest {
     // then
     assertThat(location).isNotNull();
     assertEquals(location.identification, "ZWOLLE-001");
-    assertEquals(location.maxWarehouses, 8);
-    assertEquals(location.maxCapacityPerWarehouse, 1000);
+    assertEquals(location.maxNumberOfWarehouses, 1);
+    assertEquals(location.maxCapacity, 40);
   }
 
   @Test
@@ -48,26 +48,26 @@ public class LocationGatewayTest {
     assertThat(location)
         .isNotNull()
         .hasFieldOrPropertyWithValue("identification", "AMSTERDAM-001");
-    assertThat(location.maxWarehouses).isGreaterThan(0);
-    assertThat(location.maxCapacityPerWarehouse).isGreaterThan(0);
+    assertThat(location.maxNumberOfWarehouses).isGreaterThan(0);
+    assertThat(location.maxCapacity).isGreaterThan(0);
   }
 
   @Test
-  @DisplayName("Should resolve ROTTERDAM-001 location successfully")
+  @DisplayName("Should resolve TILBURG-001 location successfully")
   public void testResolveRotterdamLocation() {
     // when
-    Location location = locationGateway.resolveByIdentifier("ROTTERDAM-001");
+    Location location = locationGateway.resolveByIdentifier("TILBURG-001");
 
     // then
     assertThat(location).isNotNull();
-    assertThat(location.identification).isEqualTo("ROTTERDAM-001");
+    assertThat(location.identification).isEqualTo("TILBURG-001");
   }
 
   @Test
-  @DisplayName("Should resolve NEW-YORK-001 location (US warehouse)")
+  @DisplayName("Should resolve EINDHOVEN-001 location")
   public void testResolveNewYorkLocation() {
     // when
-    Location location = locationGateway.resolveByIdentifier("NEW-YORK-001");
+    Location location = locationGateway.resolveByIdentifier("EINDHOVEN-001");
 
     // then
     assertThat(location)
@@ -77,10 +77,10 @@ public class LocationGatewayTest {
   }
 
   @Test
-  @DisplayName("Should resolve LOS-ANGELES-001 location (US warehouse)")
+  @DisplayName("Should resolve VETSBY-001 location")
   public void testResolveLosAngelesLocation() {
     // when
-    Location location = locationGateway.resolveByIdentifier("LOS-ANGELES-001");
+    Location location = locationGateway.resolveByIdentifier("VETSBY-001");
 
     // then
     assertThat(location).isNotNull();
@@ -155,8 +155,8 @@ public class LocationGatewayTest {
   @DisplayName("All predefined locations should have valid capacity")
   public void testAllLocationsHaveValidCapacity() {
     // given valid location codes
-    String[] validCodes = {"AMSTERDAM-001", "ROTTERDAM-001", "ZWOLLE-001", 
-                          "NEW-YORK-001", "LOS-ANGELES-001"};
+    String[] validCodes = {"AMSTERDAM-001", "TILBURG-001", "ZWOLLE-001", 
+                          "EINDHOVEN-001", "VETSBY-001"};
 
     // when-then
     for (String code : validCodes) {
@@ -164,7 +164,7 @@ public class LocationGatewayTest {
       assertThat(location)
           .isNotNull()
           .withFailMessage("Location %s should have valid capacity", code)
-          .satisfies(l -> assertThat(l.maxCapacityPerWarehouse).isGreaterThan(0));
+          .satisfies(l -> assertThat(l.maxCapacity).isGreaterThan(0));
     }
   }
 
@@ -176,7 +176,7 @@ public class LocationGatewayTest {
 
     // then
     assertThat(location.identification)
-        .matches("[A-Z-]+")
+        .matches("[A-Z0-9-]+")
         .contains("-");
   }
 }
