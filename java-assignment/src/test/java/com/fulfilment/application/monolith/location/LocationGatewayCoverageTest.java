@@ -15,29 +15,29 @@ public class LocationGatewayCoverageTest {
     private LocationGateway locationGateway = new LocationGateway();
 
     @Test
-    @DisplayName("Should resolve ROTTERDAM-001 location")
-    public void testResolveRotterdamLocation() {
-        Location location = locationGateway.resolveByIdentifier("ROTTERDAM-001");
+    @DisplayName("Should resolve ZWOLLE-001 location")
+    public void testResolveZwolleLocation() {
+        Location location = locationGateway.resolveByIdentifier("ZWOLLE-001");
         
         assertThat(location)
             .isNotNull()
-            .hasFieldOrPropertyWithValue("identification", "ROTTERDAM-001");
+            .hasFieldOrPropertyWithValue("identification", "ZWOLLE-001");
     }
 
     @Test
-    @DisplayName("Should resolve EINDHOVEN-003 location")
+    @DisplayName("Should resolve EINDHOVEN-001 location")
     public void testResolveEindhovenLocation() {
-        Location location = locationGateway.resolveByIdentifier("EINDHOVEN-003");
+        Location location = locationGateway.resolveByIdentifier("EINDHOVEN-001");
         
         assertThat(location)
             .isNotNull()
-            .hasFieldOrPropertyWithValue("identification", "EINDHOVEN-003");
+            .hasFieldOrPropertyWithValue("identification", "EINDHOVEN-001");
     }
 
     @Test
-    @DisplayName("Should resolve GRONINGEN-001 location")
-    public void testResolveGroningenLocation() {
-        Location location = locationGateway.resolveByIdentifier("GRONINGEN-001");
+    @DisplayName("Should resolve AMSTERDAM-001 location")
+    public void testResolveAmsterdamLocation() {
+        Location location = locationGateway.resolveByIdentifier("AMSTERDAM-001");
         
         assertThat(location)
             .isNotNull();
@@ -106,7 +106,7 @@ public class LocationGatewayCoverageTest {
     @Test
     @DisplayName("Should support multiple location queries")
     public void testMultipleLocationQueries() {
-        String[] validCodes = {"AMSTERDAM-001", "ROTTERDAM-001", "EINDHOVEN-003"};
+        String[] validCodes = {"AMSTERDAM-001", "ZWOLLE-001", "EINDHOVEN-001"};
         
         for (String code : validCodes) {
             Location location = locationGateway.resolveByIdentifier(code);
@@ -121,9 +121,8 @@ public class LocationGatewayCoverageTest {
     public void testWhitespaceInIdentifier() {
         Location location = locationGateway.resolveByIdentifier(" AMSTERDAM-001 ");
         
-        // Depending on implementation, may return null or trim
-        // This tests the actual behavior
-        assertThat(location).isNull(); // Assuming no trimming
+        // Whitespace in identifier won't match exact string
+        assertThat(location).isNull();
     }
 
     @Test
@@ -137,12 +136,12 @@ public class LocationGatewayCoverageTest {
     }
 
     @Test
-    @DisplayName("Should handle numeric location codes")
-    public void testNumericLocationCodes() {
+    @DisplayName("Should handle multiple warehouse locations")
+    public void testMultipleWarehouseLocations() {
         Location location1 = locationGateway.resolveByIdentifier("AMSTERDAM-001");
-        Location location2 = locationGateway.resolveByIdentifier("EINDHOVEN-003");
+        Location location2 = locationGateway.resolveByIdentifier("ZWOLLE-002");
         
-        // Different numeric suffixes should resolve to different locations
+        // Multiple warehouse locations should resolve correctly
         assertThat(location1).isNotNull();
         assertThat(location2).isNotNull();
         assertThat(location1.identification).isNotEqualTo(location2.identification);
