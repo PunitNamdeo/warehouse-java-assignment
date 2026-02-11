@@ -9,6 +9,8 @@ import jakarta.enterprise.context.ApplicationScoped;
 /**
  * Custom Health Check for the Fulfillment application.
  * Monitors application readiness and liveness status.
+ * 
+ * Used by Kubernetes probes for container health monitoring.
  */
 @Liveness
 @ApplicationScoped
@@ -16,18 +18,17 @@ public class FulfillmentHealthCheck implements HealthCheck {
 
   @Override
   public HealthCheckResponse call() {
-    Log.infof("Fulfillment application health check invoked");
-    
     try {
+      Log.info("Fulfillment application health check invoked");
+      
       // Verify application is responsive
-      return HealthCheckResponse.up("Fulfillment Service")
-          .withData("status", "OPERATIONAL")
-          .withData("timestamp", System.currentTimeMillis())
+      return HealthCheckResponse.named("Fulfillment Service")
+          .up()
           .build();
     } catch (Exception e) {
-      Log.errorf("Health check failed: %s", e.getMessage());
-      return HealthCheckResponse.down("Fulfillment Service")
-          .withData("error", e.getMessage())
+      Log.error("Health check failed: " + e.getMessage());
+      return HealthCheckResponse.named("Fulfillment Service")
+          .down()
           .build();
     }
   }
