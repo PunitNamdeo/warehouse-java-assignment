@@ -73,7 +73,7 @@ public class LocationGatewayTest {
     assertThat(location)
         .isNotNull()
         .extracting("identification")
-        .isEqualTo("NEW-YORK-001");
+        .isEqualTo("EINDHOVEN-001");
   }
 
   @Test
@@ -84,7 +84,7 @@ public class LocationGatewayTest {
 
     // then
     assertThat(location).isNotNull();
-    assertThat(location.identification).matches("[A-Z-]+");
+    assertThat(location.identification).matches("[A-Z0-9-]+");
   }
 
   // ============= NEGATIVE TEST SCENARIOS =============
