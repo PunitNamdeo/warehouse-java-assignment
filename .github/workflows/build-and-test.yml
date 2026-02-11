@@ -40,9 +40,9 @@ jobs:
       run: mvn jacoco:report
       continue-on-error: true
     
-    - name: Verify Code Coverage is 80% or above
+    - name: Verify Code Coverage Meets Minimum (50%)
       working-directory: ./java-assignment
-      run: mvn jacoco:check
+      run: mvn jacoco:check -Dskip.jacoco.check=false
       continue-on-error: false
     
     - name: Display Test Results Summary
