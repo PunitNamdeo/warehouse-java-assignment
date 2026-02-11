@@ -15,7 +15,6 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <maven.compiler.release>21</maven.compiler.release>
-        <skip.jacoco.check>true</skip.jacoco.check>
     </properties>
 
     <dependencyManagement>
@@ -132,10 +131,7 @@
                         <java.util.logging.manager>org.jboss.logmanager.LogManager</java.util.logging.manager>
                         <maven.home>${maven.home}</maven.home>
                     </systemPropertyVariables>
-                    <!-- Include focused tests, exclude tests requiring running application -->
-                    <excludes>
-                        <exclude>**/ProductEndpointTest.java</exclude>
-                    </excludes>
+                    <!-- Run all tests including REST endpoint integration tests -->
                     <!-- Allow tests to run in parallel for faster execution -->
                     <parallel>all</parallel>
                     <threadCount>4</threadCount>
@@ -159,12 +155,11 @@
                     </execution>
                     <execution>
                         <id>jacoco-check</id>
+                        <phase>verify</phase>
                         <goals>
                             <goal>check</goal>
                         </goals>
-                        <phase>verify</phase>
                         <configuration>
-                            <skip>${skip.jacoco.check}</skip>
                             <rules>
                                 <rule>
                                     <element>PACKAGE</element>
@@ -177,7 +172,7 @@
                                         <limit>
                                             <counter>LINE</counter>
                                             <value>COVEREDRATIO</value>
-                                            <minimum>0.50</minimum>
+                                            <minimum>0.70</minimum>
                                         </limit>
                                     </limits>
                                 </rule>
