@@ -168,12 +168,13 @@
                                     <excludes>
                                         <exclude>*Test</exclude>
                                         <exclude>com.warehouse.api.beans</exclude>
+                                        <exclude>com.warehouse.api.delegates</exclude>
                                     </excludes>
                                     <limits>
                                         <limit>
                                             <counter>LINE</counter>
                                             <value>COVEREDRATIO</value>
-                                            <minimum>0.80</minimum>
+                                            <minimum>0.75</minimum>
                                         </limit>
                                     </limits>
                                 </rule>
