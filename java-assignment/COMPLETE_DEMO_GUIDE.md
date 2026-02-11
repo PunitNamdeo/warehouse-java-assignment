@@ -511,8 +511,6 @@ WAREHOUSE_PRODUCT_STORE (Fulfillment Associations)
 
 ## 🎯 Summary
 
-**Total Demo Duration:** ~20-25 minutes
-
 This demonstration shows:
 - ✅ All 4 entities working together
 - ✅ Complete REST API with CRUD operations
