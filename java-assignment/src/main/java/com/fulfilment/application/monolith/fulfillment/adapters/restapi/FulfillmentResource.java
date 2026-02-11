@@ -34,6 +34,19 @@ public class FulfillmentResource {
 
   private static final Logger LOGGER = Logger.getLogger(FulfillmentResource.class.getName());
 
+  @GET
+  public Response listAllAssociations() {
+    var associations = repository.listAll().stream()
+        .map(db -> new WarehouseProductStoreDto(
+            db.id,
+            db.productId,
+            db.storeId,
+            db.warehouseBusinessUnitCode,
+            db.createdAt))
+        .toList();
+    return Response.ok(associations).build();
+  }
+
   @POST
   @Transactional
   public Response associate(AssociationRequest request) {
@@ -96,6 +109,22 @@ public class FulfillmentResource {
     public Long productId;
     public Long storeId;
     public String warehouseBusinessUnitCode;
+  }
+
+  public static class WarehouseProductStoreDto {
+    public Long id;
+    public Long productId;
+    public Long storeId;
+    public String warehouseBusinessUnitCode;
+    public java.time.LocalDateTime createdAt;
+
+    public WarehouseProductStoreDto(Long id, Long productId, Long storeId, String warehouseBusinessUnitCode, java.time.LocalDateTime createdAt) {
+      this.id = id;
+      this.productId = productId;
+      this.storeId = storeId;
+      this.warehouseBusinessUnitCode = warehouseBusinessUnitCode;
+      this.createdAt = createdAt;
+    }
   }
 
   @Provider

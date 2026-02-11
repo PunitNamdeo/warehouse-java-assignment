@@ -2,15 +2,260 @@
 <html>
 <head>
     <meta charset="utf-8"/>
-    <title>Hibernate ORM with Panache quickstart - Quarkus</title>
+    <title>Warehouse Management System - Complete CRUD Demo</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/wingcss/0.1.8/wing.min.css"/>
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            margin: 0 0 10px 0;
+            font-size: 28px;
+        }
+
+        .header p {
+            margin: 0;
+            opacity: 0.9;
+            font-size: 14px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #ddd;
+            flex-wrap: wrap;
+        }
+
+        .tab-button {
+            padding: 12px 20px;
+            border: none;
+            background: white;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            font-weight: 500;
+            color: #666;
+            transition: all 0.3s ease;
+        }
+
+        .tab-button:hover {
+            background: #f9f9f9;
+            color: #333;
+        }
+
+        .tab-button.active {
+            border-bottom-color: #667eea;
+            color: #667eea;
+            background: white;
+        }
+
+        .tab-content {
+            display: none;
+            background: white;
+            padding: 25px;
+            border-radius: 4px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #333;
+        }
+
+        input[type=text],
+        input[type=number],
+        input[type=email],
+        input[type=password],
+        select,
+        textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-family: inherit;
+            font-size: 14px;
+        }
+
+        input:focus,
+        select:focus,
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .form-row.full {
+            grid-template-columns: 1fr;
+        }
+
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            margin-right: 10px;
+            margin-top: 10px;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+        }
+
+        .btn-danger {
+            background: #f5365c;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #ec0c38;
+        }
+
+        .btn-warning {
+            background: #fb6340;
+            color: white;
+        }
+
+        .btn-warning:hover {
+            background: #fa4516;
+        }
+
+        .btn-secondary {
+            background: #e3e3e3;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background: #d3d3d3;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th {
+            background: #f8f9fa;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            border-bottom: 2px solid #ddd;
+        }
+
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+        }
+
+        tr:hover {
+            background: #f9f9f9;
+        }
+
+        .alert {
+            padding: 12px 15px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+            display: none;
+        }
+
+        .alert.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .alert.show {
+            display: block;
+        }
+
+        .no-data {
+            text-align: center;
+            padding: 30px;
+            color: #999;
+            font-style: italic;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-top: 25px;
+            margin-bottom: 15px;
+            color: #333;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .stat-box {
+            display: inline-block;
+            background: #f8f9fa;
+            padding: 15px 25px;
+            border-radius: 4px;
+            margin: 10px 10px 10px 0;
+            border-left: 4px solid #667eea;
+        }
+
+        .stat-box strong {
+            color: #667eea;
+        }
+
         input[type=number] {
             width: 100%;
-            padding: 12px 20px;
+            padding: 10px;
             margin: 8px 0;
             display: inline-block;
-            border: 1px solid #ccc;
+            border: 1px solid #ddd;
             border-radius: 4px;
             box-sizing: border-box;
             -webkit-transition: .5s;
@@ -19,135 +264,561 @@
             font-family: 'Open Sans', serif;
         }
     </style>
-    <!-- Load AngularJS -->
-    <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.4.8/angular.min.js"></script>
-    <script type="text/javascript">
-      var app = angular.module("ProductManagement", []);
-
-      //Controller Part
-      app.controller("ProductManagementController", function ($scope, $http) {
-
-        //Initialize page with default data which is blank in this example
-        $scope.products = [];
-
-        $scope.form = {
-          id: -1,
-          name: ""
-        };
-
-        //Now load the data from server
-        _refreshPageData();
-
-        //HTTP POST/PUT methods for add/edit products
-        $scope.update = function () {
-          var method = "";
-          var url = "";
-          var data = {};
-          if ($scope.form.id == -1) {
-            //Id is absent so add products - POST operation
-            method = "POST";
-            url = '/product';
-            data.name = $scope.form.name;
-          } else {
-            //If Id is present, it's edit operation - PUT operation
-            method = "PUT";
-            url = '/product/' + $scope.form.id;
-            data.name = $scope.form.name;
-          }
-
-          $http({
-            method: method,
-            url: url,
-            data: angular.toJson(data),
-            headers: {
-              'Content-Type': 'application/json'
-            }
-          }).then(_success, _error);
-        };
-
-        //HTTP DELETE- delete product by id
-        $scope.remove = function (product) {
-          $http({
-            method: 'DELETE',
-            url: '/product/' + product.id
-          }).then(_success, _error);
-        };
-
-        //In case of edit products, populate form with product data
-        $scope.edit = function (product) {
-          $scope.form.name = product.name;
-          $scope.form.id = product.id;
-        };
-
-          /* Private Methods */
-        //HTTP GET- get all products collection
-        function _refreshPageData() {
-          $http({
-            method: 'GET',
-            url: '/product'
-          }).then(function successCallback(response) {
-            $scope.products = response.data;
-          }, function errorCallback(response) {
-            console.log(response.statusText);
-          });
-        }
-
-        function _success(response) {
-          _refreshPageData();
-          _clearForm()
-        }
-
-        function _error(response) {
-          alert(response.data.message || response.statusText);
-        }
-
-        //Clear the form
-        function _clearForm() {
-          $scope.form.name = "";
-          $scope.form.id = -1;
-        }
-      });
-    </script>
 </head>
-<body ng-app="ProductManagement" ng-controller="ProductManagementController">
-
-<div class="container">
-    <h1>Java Code Assignment</h1>
-    <p>This application demonstrates how a Quarkus application implements a CRUD endpoint to manage products using Hibernate ORM with Panache.
-        This management interface invokes the CRUD service endpoint, which interacts with a database using JPA and several other well known libraries.
-    </p>
-
-    <h3>Add/Edit an Product to the Warehouse</h3>
-    <form ng-submit="update()">
-        <div class="row">
-            <div class="col-6"><input type="text" placeholder="Name" ng-model="form.name" size="60"/></div>
-        </div>
-        <input type="submit" value="Save"/>
-    </form>
-
-    <h3>Product List</h3>
-    <div class="row">
-        <div class="col-2">Name</div>
-    </div>
-    <div class="row" ng-repeat="product in products">
-        <div class="col-2">{{ product.name }}</div>
-        <div class="col-8"><a ng-click="edit( product )" class="btn">Edit</a> <a ng-click="remove( product )" class="btn">Remove</a>
-        </div>
+<body ng-app="warehouseApp" ng-controller="AppController">
+    <div class="header">
+        <h1>📦 Warehouse Management System</h1>
+        <p>Complete CRUD demonstration with Products, Stores, Warehouses, Locations, and Fulfillment Associations</p>
     </div>
 
-    <p>Behind the scenes, we have:
-        <ul>
-            <li>Hibernate ORM with Panache taking care of all CRUD operations</li>
-            <li>RESTEasy powering the REST API</li>
-            <li>ArC, a CDI based dependency injection framework</li>
-            <li>the Narayana Transaction Manager coordinating all transactions</li>
-            <li>Agroal, the high performance Datasource implementation</li>
-            <li>Infinispan used as Hibernate 2nd level caching: enabled on both entities and queries</li>
-            <li>The Undertow webserver</li>
-            <li>Some magic bytecode generation plugged in the compiler...</li>
-        </ul>
-    </p>
-</div>
+    <div class="container">
+        <!-- Tabs Navigation -->
+        <div class="tabs">
+            <button class="tab-button active" onclick="switchTab('products')">📦 Products</button>
+            <button class="tab-button" onclick="switchTab('stores')">🏪 Stores</button>
+            <button class="tab-button" onclick="switchTab('warehouses')">🏭 Warehouses</button>
+            <button class="tab-button" onclick="switchTab('locations')">📍 Locations</button>
+            <button class="tab-button" onclick="switchTab('fulfillment')">🔗 Fulfillment</button>
+        </div>
 
+        <!-- ===== PRODUCTS TAB ===== -->
+        <div id="products" class="tab-content active">
+            <div class="alert" id="productAlert"></div>
+
+            <div class="section-title">Create/Edit Product</div>
+            <div class="form-group">
+                <label>Product Name</label>
+                <input type="text" ng-model="productForm.name" placeholder="Enter product name"/>
+            </div>
+            <button class="btn-primary" ng-click="createProduct()">Create Product</button>
+            <button class="btn-secondary" ng-click="clearProductForm()">Clear</button>
+
+            <div class="section-title">All Products ({{products.length}})</div>
+            <table ng-show="products.length > 0">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr ng-repeat="product in products">
+                        <td>{{product.id}}</td>
+                        <td>{{product.name}}</td>
+                        <td>
+                            <button class="btn-danger" ng-click="deleteProduct(product.id)">Delete</button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            <div class="no-data" ng-show="products.length === 0">No products found. Create one to get started!</div>
+        </div>
+
+        <!-- ===== STORES TAB ===== -->
+        <div id="stores" class="tab-content">
+            <div class="alert" id="storeAlert"></div>
+
+            <div class="section-title">Create Store</div>
+            <div class="form-group">
+                <label>Store Name</label>
+                <input type="text" ng-model="storeForm.name" placeholder="e.g., Store #5 Manhattan"/>
+            </div>
+            <button class="btn-primary" ng-click="createStore()">Create Store</button>
+            <button class="btn-secondary" ng-click="clearStoreForm()">Clear</button>
+
+            <div class="section-title">All Stores ({{stores.length}})</div>
+            <table ng-show="stores.length > 0">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Quantity in Stock</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr ng-repeat="store in stores">
+                        <td>{{store.id}}</td>
+                        <td>{{store.name}}</td>
+                        <td>{{store.quantityProductsInStock}}</td>
+                        <td>
+                            <button class="btn-danger" ng-click="deleteStore(store.id)">Delete</button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            <div class="no-data" ng-show="stores.length === 0">No stores found. Create one to get started!</div>
+        </div>
+
+        <!-- ===== WAREHOUSES TAB ===== -->
+        <div id="warehouses" class="tab-content">
+            <div class="alert" id="warehouseAlert"></div>
+
+            <div class="section-title">Create Warehouse</div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Business Unit Code</label>
+                    <input type="text" ng-model="warehouseForm.businessUnitCode" placeholder="e.g., BU001"/>
+                </div>
+                <div class="form-group">
+                    <label>Location Identifier</label>
+                    <select ng-model="warehouseForm.location">
+                        <option value="">Select Location</option>
+                        <option value="AMSTERDAM-001">Amsterdam</option>
+                        <option value="ROTTERDAM-001">Rotterdam</option>
+                        <option value="ZWOLLE-001">Zwolle</option>
+                        <option value="NEW-YORK-001">New York</option>
+                        <option value="LOS-ANGELES-001">Los Angeles</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Capacity</label>
+                    <input type="number" ng-model="warehouseForm.capacity" placeholder="e.g., 1000"/>
+                </div>
+                <div class="form-group">
+                    <label>Current Stock</label>
+                    <input type="number" ng-model="warehouseForm.stock" placeholder="e.g., 0"/>
+                </div>
+            </div>
+            <button class="btn-primary" ng-click="createWarehouse()">Create Warehouse</button>
+            <button class="btn-secondary" ng-click="clearWarehouseForm()">Clear</button>
+
+            <div class="section-title">All Warehouses ({{warehouses.length}})</div>
+            <table ng-show="warehouses.length > 0">
+                <thead>
+                    <tr>
+                        <th>Business Unit Code</th>
+                        <th>Location</th>
+                        <th>Capacity</th>
+                        <th>Stock</th>
+                        <th>Archived</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr ng-repeat="warehouse in warehouses" ng-style="{opacity: warehouse.archivedAt ? 0.6 : 1}">
+                        <td>{{warehouse.businessUnitCode}}</td>
+                        <td>{{warehouse.location}}</td>
+                        <td>{{warehouse.capacity}}</td>
+                        <td>{{warehouse.stock}}</td>
+                        <td>{{warehouse.archivedAt ? 'Yes' : 'No'}}</td>
+                        <td>
+                            <button class="btn-warning" ng-click="archiveWarehouse(warehouse.businessUnitCode)" ng-disabled="warehouse.archivedAt">Archive</button>
+                            <button class="btn-danger" ng-click="deleteWarehouse(warehouse.businessUnitCode)">Delete</button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            <div class="no-data" ng-show="warehouses.length === 0">No warehouses found. Create one to get started!</div>
+        </div>
+
+        <!-- ===== LOCATIONS TAB ===== -->
+        <div id="locations" class="tab-content">
+            <div class="alert" id="locationAlert"></div>
+
+            <div class="section-title">Predefined Locations (Read-Only Reference Data)</div>
+            <p style="margin-bottom: 15px; color: #666;">
+                Locations are predefined reference data in the system. They define city/region constraints for warehouse placement.
+            </p>
+            <table ng-show="locations.length > 0">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Identification</th>
+                        <th>Max Warehouses</th>
+                        <th>Max Capacity</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr ng-repeat="location in locations">
+                        <td>{{location.id}}</td>
+                        <td>{{location.identification}}</td>
+                        <td>{{location.maxNumberOfWarehouses}}</td>
+                        <td>{{location.maxCapacity}} units</td>
+                    </tr>
+                </tbody>
+            </table>
+            <div class="no-data" ng-show="locations.length === 0">Loading locations...</div>
+        </div>
+
+        <!-- ===== FULFILLMENT ASSOCIATIONS TAB ===== -->
+        <div id="fulfillment" class="tab-content">
+            <div class="alert" id="fulfillmentAlert"></div>
+
+            <div class="section-title">Create Fulfillment Association</div>
+            <p style="margin-bottom: 15px; color: #666; font-size: 13px;">
+                <strong>⚠️ Required:</strong> Warehouse, Store, and Product are all required fields. The warehouse location must be handled via warehouse's location identifier.
+            </p>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Warehouse (Business Unit Code)</label>
+                    <select ng-model="fulfillmentForm.warehouseBusinessUnitCode">
+                        <option value="">Select Warehouse</option>
+                        <option ng-repeat="wh in warehouses" ng-disabled="wh.archivedAt" value="{{wh.businessUnitCode}}">
+                            {{wh.businessUnitCode}} ({{wh.location}})
+                        </option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Store</label>
+                    <select ng-model="fulfillmentForm.storeId">
+                        <option value="">Select Store</option>
+                        <option ng-repeat="store in stores" value="{{store.id}}">
+                            {{store.name}} (ID: {{store.id}})
+                        </option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Product</label>
+                    <select ng-model="fulfillmentForm.productId">
+                        <option value="">Select Product</option>
+                        <option ng-repeat="product in products" value="{{product.id}}">{{product.name}}</option>
+                    </select>
+                </div>
+            </div>
+            <button class="btn-primary" ng-click="createFulfillment()">Create Association</button>
+            <button class="btn-secondary" ng-click="clearFulfillmentForm()">Clear</button>
+
+            <div class="section-title">Fulfillment Associations ({{fulfillment.length}})</div>
+            <table ng-show="fulfillment.length > 0">
+                <thead>
+                    <tr>
+                        <th>Warehouse Code</th>
+                        <th>Store</th>
+                        <th>Product</th>
+                        <th>Created At</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr ng-repeat="f in fulfillment">
+                        <td>{{f.warehouseBusinessUnitCode}}</td>
+                        <td>{{getStoreName(f.storeId)}}</td>
+                        <td>{{getProductName(f.productId)}}</td>
+                        <td>{{f.createdAt}}</td>
+                        <td>
+                            <button class="btn-danger" ng-click="deleteFulfillment(f.warehouseBusinessUnitCode, f.storeId, f.productId)">Delete</button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            <div class="no-data" ng-show="fulfillment.length === 0">No fulfillment associations found. Create one to get started!</div>
+        </div>
+    </div>
+
+    <!-- Angular.js Script -->
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.4.8/angular.min.js"></script>
+    <script type="application/javascript">
+        var app = angular.module('warehouseApp', []);
+
+        app.controller('AppController', function($scope, $http) {
+            // === Data Models ===
+            $scope.products = [];
+            $scope.stores = [];
+            $scope.warehouses = [];
+            $scope.locations = [];
+            $scope.fulfillment = [];
+
+            // === Form Models ===
+            $scope.productForm = {};
+            $scope.storeForm = {};
+            $scope.warehouseForm = {};
+            $scope.fulfillmentForm = {};
+
+            // === INITIALIZATION ===
+            function init() {
+                loadLocations();
+                loadProducts();
+                loadStores();
+                loadWarehouses();
+                loadFulfillment();
+            }
+
+            // === LOCATION FUNCTIONS (Read-Only) ===
+            function loadLocations() {
+                $scope.locations = [
+                    {id: 'ZWOLLE-001', identification: 'ZWOLLE-001', maxNumberOfWarehouses: 1, maxCapacity: 40},
+                    {id: 'ZWOLLE-002', identification: 'ZWOLLE-002', maxNumberOfWarehouses: 2, maxCapacity: 50},
+                    {id: 'AMSTERDAM-001', identification: 'AMSTERDAM-001', maxNumberOfWarehouses: 5, maxCapacity: 100},
+                    {id: 'AMSTERDAM-002', identification: 'AMSTERDAM-002', maxNumberOfWarehouses: 3, maxCapacity: 75},
+                    {id: 'TILBURG-001', identification: 'TILBURG-001', maxNumberOfWarehouses: 1, maxCapacity: 40},
+                    {id: 'HELMOND-001', identification: 'HELMOND-001', maxNumberOfWarehouses: 1, maxCapacity: 45},
+                    {id: 'EINDHOVEN-001', identification: 'EINDHOVEN-001', maxNumberOfWarehouses: 2, maxCapacity: 70},
+                    {id: 'VETSBY-001', identification: 'VETSBY-001', maxNumberOfWarehouses: 1, maxCapacity: 90}
+                ];
+            }
+
+            $scope.getLocationName = function(locationId) {
+                var location = $scope.locations.find(l => l.id == locationId);
+                return location ? location.identification : 'Unknown';
+            };
+
+            // === PRODUCT FUNCTIONS ===
+            function loadProducts() {
+                $http.get('/product').then(function(response) {
+                    $scope.products = response.data;
+                });
+            }
+
+            $scope.createProduct = function() {
+                if (!$scope.productForm.name) {
+                    showAlert('productAlert', 'Product name is required', 'error');
+                    return;
+                }
+
+                $http.post('/product', {name: $scope.productForm.name}).then(
+                    function(response) {
+                        loadProducts();
+                        $scope.clearProductForm();
+                        showAlert('productAlert', 'Product created successfully!', 'success');
+                    },
+                    function(error) {
+                        showAlert('productAlert', 'Error creating product: ' + error.statusText, 'error');
+                    }
+                );
+            };
+
+            $scope.deleteProduct = function(productId) {
+                if (confirm('Are you sure you want to delete this product?')) {
+                    $http.delete('/product/' + productId).then(
+                        function() {
+                            loadProducts();
+                            showAlert('productAlert', 'Product deleted successfully!', 'success');
+                        },
+                        function(error) {
+                            showAlert('productAlert', 'Error deleting product', 'error');
+                        }
+                    );
+                }
+            };
+
+            $scope.clearProductForm = function() {
+                $scope.productForm = {};
+            };
+
+            $scope.getProductName = function(productId) {
+                var product = $scope.products.find(p => p.id == productId);
+                return product ? product.name : 'Unknown';
+            };
+
+            // === STORE FUNCTIONS ===
+            function loadStores() {
+                $http.get('/store').then(function(response) {
+                    $scope.stores = response.data;
+                });
+            }
+
+            $scope.createStore = function() {
+                if (!$scope.storeForm.name) {
+                    showAlert('storeAlert', 'Store name is required', 'error');
+                    return;
+                }
+
+                $http.post('/store', {
+                    name: $scope.storeForm.name
+                }).then(
+                    function() {
+                        loadStores();
+                        $scope.clearStoreForm();
+                        showAlert('storeAlert', 'Store created successfully!', 'success');
+                    },
+                    function(error) {
+                        showAlert('storeAlert', 'Error creating store: ' + error.statusText, 'error');
+                    }
+                );
+            };
+
+            $scope.deleteStore = function(storeId) {
+                if (confirm('Are you sure? Deleting a store removes all associated fulfillments.')) {
+                    $http.delete('/store/' + storeId).then(
+                        function() {
+                            loadStores();
+                            loadFulfillment();
+                            showAlert('storeAlert', 'Store deleted successfully!', 'success');
+                        },
+                        function(error) {
+                            showAlert('storeAlert', 'Error deleting store', 'error');
+                        }
+                    );
+                }
+            };
+
+            $scope.clearStoreForm = function() {
+                $scope.storeForm = {};
+            };
+
+            $scope.getStoreName = function(storeId) {
+                var store = $scope.stores.find(s => s.id == storeId);
+                return store ? store.name : 'Unknown';
+            };
+
+            // === WAREHOUSE FUNCTIONS ===
+            function loadWarehouses() {
+                $http.get('/warehouse').then(function(response) {
+                    $scope.warehouses = response.data;
+                });
+            }
+
+            $scope.createWarehouse = function() {
+                if (!$scope.warehouseForm.businessUnitCode || !$scope.warehouseForm.location) {
+                    showAlert('warehouseAlert', 'Business Unit Code and location are required', 'error');
+                    return;
+                }
+
+                $http.post('/warehouse', {
+                    businessUnitCode: $scope.warehouseForm.businessUnitCode,
+                    location: $scope.warehouseForm.location,
+                    capacity: parseInt($scope.warehouseForm.capacity) || 0,
+                    stock: parseInt($scope.warehouseForm.stock) || 0
+                }).then(
+                    function() {
+                        loadWarehouses();
+                        $scope.clearWarehouseForm();
+                        showAlert('warehouseAlert', 'Warehouse created successfully!', 'success');
+                    },
+                    function(error) {
+                        var msg = 'Error creating warehouse';
+                        if (error.data && error.data.error) {
+                            msg += ': ' + error.data.error;
+                        }
+                        showAlert('warehouseAlert', msg, 'error');
+                    }
+                );
+            };
+
+            $scope.archiveWarehouse = function(businessUnitCode) {
+                if (confirm('Archive this warehouse? It will remain in database for history but cannot be used for new fulfillments.')) {
+                    $http.delete('/warehouse/' + businessUnitCode).then(
+                        function() {
+                            loadWarehouses();
+                            loadFulfillment();
+                            showAlert('warehouseAlert', 'Warehouse archived successfully!', 'success');
+                        },
+                        function(error) {
+                            showAlert('warehouseAlert', 'Error archiving warehouse: ' + error.statusText, 'error');
+                        }
+                    );
+                }
+            };
+
+            $scope.deleteWarehouse = function(businessUnitCode) {
+                if (confirm('Are you sure? This will also delete all associated fulfillments.')) {
+                    $http.delete('/warehouse/' + businessUnitCode).then(
+                        function() {
+                            loadWarehouses();
+                            loadFulfillment();
+                            showAlert('warehouseAlert', 'Warehouse deleted successfully!', 'success');
+                        },
+                        function(error) {
+                            showAlert('warehouseAlert', 'Error deleting warehouse: ' + error.statusText, 'error');
+                        }
+                    );
+                }
+            };
+
+            $scope.clearWarehouseForm = function() {
+                $scope.warehouseForm = {};
+            };
+
+            // === FULFILLMENT FUNCTIONS ===
+            function loadFulfillment() {
+                $http.get('/fulfillment/warehouse-product-store').then(function(response) {
+                    $scope.fulfillment = response.data;
+                });
+            }
+
+            $scope.createFulfillment = function() {
+                if (!$scope.fulfillmentForm.warehouseBusinessUnitCode || !$scope.fulfillmentForm.storeId || !$scope.fulfillmentForm.productId) {
+                    showAlert('fulfillmentAlert', 'Warehouse, Store, and Product are required', 'error');
+                    return;
+                }
+
+                var payload = {
+                    warehouseBusinessUnitCode: $scope.fulfillmentForm.warehouseBusinessUnitCode,
+                    storeId: parseInt($scope.fulfillmentForm.storeId),
+                    productId: parseInt($scope.fulfillmentForm.productId)
+                };
+
+                $http.post('/fulfillment/warehouse-product-store', payload).then(
+                    function() {
+                        loadFulfillment();
+                        $scope.clearFulfillmentForm();
+                        showAlert('fulfillmentAlert', 'Fulfillment association created successfully!', 'success');
+                    },
+                    function(error) {
+                        var message = 'Error: ';
+                        if (error.status === 400 && error.data && error.data.error) {
+                            message += error.data.error;
+                        } else if (error.status === 409) {
+                            message += 'Constraint violation - Check warehouse/store and fulfillment limits';
+                        } else {
+                            message += error.statusText;
+                        }
+                        showAlert('fulfillmentAlert', message, 'error');
+                    }
+                );
+            };
+
+            $scope.deleteFulfillment = function(warehouseCode, storeId, productId) {
+                if (confirm('Delete this fulfillment association?')) {
+                    var url = '/fulfillment/warehouse-product-store/product/' + productId + '/store/' + storeId + '/warehouse/' + warehouseCode;
+                    $http.delete(url).then(
+                        function() {
+                            loadFulfillment();
+                            showAlert('fulfillmentAlert', 'Fulfillment association deleted successfully!', 'success');
+                        },
+                        function(error) {
+                            showAlert('fulfillmentAlert', 'Error deleting fulfillment association: ' + error.statusText, 'error');
+                        }
+                    );
+                }
+            };
+
+            $scope.clearFulfillmentForm = function() {
+                $scope.fulfillmentForm = {};
+            };
+
+            $scope.getProductName = function(productId) {
+                var product = $scope.products.find(p => p.id == productId);
+                return product ? product.name : 'Unknown';
+            };
+
+            // === UI UTILITIES ===
+            function showAlert(alertId, message, type) {
+                var alert = document.getElementById(alertId);
+                alert.textContent = message;
+                alert.className = 'alert ' + type + ' show';
+                setTimeout(function() {
+                    alert.className = 'alert';
+                }, 5000);
+            }
+
+            // === Initialize ===
+            init();
+        });
+
+        function switchTab(tabName) {
+            // Hide all tabs
+            var tabs = document.getElementsByClassName('tab-content');
+            for (var i = 0; i < tabs.length; i++) {
+                tabs[i].classList.remove('active');
+            }
+
+            // Deactivate all buttons
+            var buttons = document.getElementsByClassName('tab-button');
+            for (var i = 0; i < buttons.length; i++) {
+                buttons[i].classList.remove('active');
+            }
+
+            // Show selected tab and activate button
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+        }
+    </script>
 </body>
 </html>
