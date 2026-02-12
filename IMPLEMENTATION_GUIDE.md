@@ -116,9 +116,6 @@
    - Archive warehouse: 3 tests
    - Replace warehouse: 4 tests
 
-**Total Test Cases: 69**
-**Coverage Target**: 80% line coverage (enforced by JaCoCo Maven plugin)
-
 #### Test Organization Pattern: Given-When-Then
 
 ```java
