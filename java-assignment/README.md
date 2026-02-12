@@ -35,7 +35,7 @@ After startup, access the application at: **http://localhost:8080**
 | **[CODE_ASSIGNMENT.md](CODE_ASSIGNMENT.md)** | 📝 Assignment tasks and requirements (3 main tasks: Location, Store, Warehouse) |
 | **[QUESTIONS.md](QUESTIONS.md)** | ❓ Architectural questions + Case Study answers with cost control strategies |
 | **[COMPLETE_DEMO_GUIDE.md](COMPLETE_DEMO_GUIDE.md)** | 🎯 End-to-end demo with all API endpoints and test scenarios |
-| **[ENTITY_RELATIONS_AND_FLOW.md](ENTITY_RELATIONS_AND_FLOW.md)** | 🔗 **INTERVIEW GUIDE**: Entity relationships, system flows, architecture patterns |
+| **[ENTITY_RELATIONS_AND_FLOW.md](ENTITY_RELATIONS_AND_FLOW.md)** | 🔗  Entity relationships, system flows, architecture patterns |
 | **[../case-study/BRIEFING.md](../case-study/BRIEFING.md)** | 🏢 Domain overview and business context |
 | **[../case-study/CASE_STUDY.md](../case-study/CASE_STUDY.md)** | 💼 Cost control scenarios with detailed answers |
 
@@ -115,7 +115,6 @@ Follow the **[COMPLETE_DEMO_GUIDE.md](COMPLETE_DEMO_GUIDE.md)** for step-by-step
 - Error handling scenarios
 - Data integrity verification
 
-**Est. time: 20-25 minutes**
 
 ### Run Unit Tests
 ```bash
