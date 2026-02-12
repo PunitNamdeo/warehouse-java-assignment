@@ -17,7 +17,7 @@ Then navigate to: **http://localhost:8080**
 ### 📚 Key Documentation
 - **[Assignment Tasks](java-assignment/CODE_ASSIGNMENT.md)** - What you need to implement
 - **[Complete Demo Guide](java-assignment/COMPLETE_DEMO_GUIDE.md)** - Full API walkthrough with examples
-- **[Interview Guide](java-assignment/ENTITY_RELATIONS_AND_FLOW.md)** - Entity relationships, system flows, architecture patterns
+- **[Entity Relations And Flow](java-assignment/ENTITY_RELATIONS_AND_FLOW.md)** - Entity relationships, system flows, architecture patterns
 - **[Discussion Questions](java-assignment/QUESTIONS.md)** - Architectural decisions + Case Study answers
 - **[Project README](java-assignment/README.md)** - Full project documentation
 
