@@ -72,6 +72,24 @@ public class ReplaceWarehouseUseCase implements ReplaceWarehouseOperation {
           400);
     }
 
+    // Validate max warehouses per location for the NEW location
+    // Count existing warehouses at the new location (excluding the old warehouse if it's at the same location)
+    var existingWareousesAtNewLocation =
+        warehouseStore.getAll().stream()
+            .filter(w -> w.location.equals(newWarehouse.location))
+            .filter(w -> !w.businessUnitCode.equals(newWarehouse.businessUnitCode)) // Exclude the old warehouse itself
+            .count();
+
+    if (existingWareousesAtNewLocation >= location.maxNumberOfWarehouses) {
+      throw new WebApplicationException(
+          "Maximum number of warehouses ("
+              + location.maxNumberOfWarehouses
+              + ") has been reached for location '"
+              + newWarehouse.location
+              + "'.",
+          409);
+    }
+
     // Archive the old warehouse
     oldWarehouse.archivedAt = LocalDateTime.now();
     warehouseStore.update(oldWarehouse);

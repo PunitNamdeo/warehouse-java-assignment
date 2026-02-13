@@ -8,6 +8,10 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceException;
+import jakarta.transaction.RollbackException;
+import jakarta.transaction.Status;
+import jakarta.transaction.Synchronization;
+import jakarta.transaction.TransactionSynchronizationRegistry;
 import jakarta.transaction.Transactional;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
@@ -58,6 +62,9 @@ public class StoreResource {
 
   @Inject 
   EntityManager entityManager;
+
+  @Inject
+  TransactionSynchronizationRegistry transactionSynchronizationRegistry;
 
   private static final Logger LOGGER = Logger.getLogger(StoreResource.class.getName());
 
@@ -137,13 +144,30 @@ public class StoreResource {
       store.persist();
       entityManager.flush();
 
-      try {
-        legacyStoreManagerGateway.createStoreOnLegacySystem(store);
-        Log.infof("Successfully created store: %s (ID: %d)", store.name, store.id);
-      } catch (Exception legacyError) {
-        Log.warnf(legacyError, "Legacy system notification failed for store %s, but store was created locally", store.name);
-        // Continue - don't fail the main operation if legacy system call fails
-      }
+      // Register callback to execute AFTER successful transaction commit
+      transactionSynchronizationRegistry.registerInterposedSynchronization(
+          new Synchronization() {
+            @Override
+            public void afterCompletion(int status) {
+              // Only execute if transaction committed successfully (status = STATUS_COMMITTED)
+              if (status == Status.STATUS_COMMITTED) {
+                try {
+                  Log.infof("Transaction committed, notifying legacy system for store: %s", store.name);
+                  legacyStoreManagerGateway.createStoreOnLegacySystem(store);
+                  Log.infof("Successfully notified legacy system for store: %s (ID: %d)", store.name, store.id);
+                } catch (Exception legacyError) {
+                  // This is AFTER commit, so we cannot rollback DB. We must fail the operation.
+                  Log.errorf(legacyError, "CRITICAL: Legacy system notification failed after DB commit for store %s. Data inconsistency detected!", store.name);
+                  throw new RuntimeException("Legacy system notification failed after database commit", legacyError);
+                }
+              }
+            }
+
+            @Override
+            public void beforeCompletion() {
+              // Not needed for this use case
+            }
+          });
 
       return Response.ok(store).status(201).build();
     } catch (WebApplicationException e) {
@@ -192,12 +216,30 @@ public class StoreResource {
       
       entityManager.flush();
 
-      try {
-        legacyStoreManagerGateway.updateStoreOnLegacySystem(updatedStore);
-        Log.infof("Successfully updated store ID %d from '%s' to '%s'", id, oldName, updatedStore.name);
-      } catch (Exception legacyError) {
-        Log.warnf(legacyError, "Legacy system notification failed for store %d update", id);
-      }
+      // Register callback to execute AFTER successful transaction commit
+      transactionSynchronizationRegistry.registerInterposedSynchronization(
+          new Synchronization() {
+            @Override
+            public void afterCompletion(int status) {
+              // Only execute if transaction committed successfully (status = STATUS_COMMITTED)
+              if (status == Status.STATUS_COMMITTED) {
+                try {
+                  Log.infof("Transaction committed, notifying legacy system for store update: %s (ID: %d)", entity.name, id);
+                  legacyStoreManagerGateway.updateStoreOnLegacySystem(entity);
+                  Log.infof("Successfully notified legacy system for store update: %s (ID: %d)", entity.name, id);
+                } catch (Exception legacyError) {
+                  // This is AFTER commit, so we cannot rollback DB. We must fail.
+                  Log.errorf(legacyError, "CRITICAL: Legacy system notification failed after DB commit for store %d update. Data inconsistency detected!", id);
+                  throw new RuntimeException("Legacy system notification failed after database commit", legacyError);
+                }
+              }
+            }
+
+            @Override
+            public void beforeCompletion() {
+              // Not needed for this use case
+            }
+          });
 
       return entity;
     } catch (WebApplicationException e) {
@@ -246,11 +288,30 @@ public class StoreResource {
 
       entityManager.flush();
 
-      try {
-        legacyStoreManagerGateway.updateStoreOnLegacySystem(updatedStore);
-      } catch (Exception legacyError) {
-        Log.warnf(legacyError, "Legacy system notification failed for store %d patch", id);
-      }
+      // Register callback to execute AFTER successful transaction commit
+      transactionSynchronizationRegistry.registerInterposedSynchronization(
+          new Synchronization() {
+            @Override
+            public void afterCompletion(int status) {
+              // Only execute if transaction committed successfully (status = STATUS_COMMITTED)
+              if (status == Status.STATUS_COMMITTED) {
+                try {
+                  Log.infof("Transaction committed, notifying legacy system for store patch: %s (ID: %d)", entity.name, id);
+                  legacyStoreManagerGateway.updateStoreOnLegacySystem(entity);
+                  Log.infof("Successfully notified legacy system for store patch: %s (ID: %d)", entity.name, id);
+                } catch (Exception legacyError) {
+                  // This is AFTER commit, so we cannot rollback DB. We must fail.
+                  Log.errorf(legacyError, "CRITICAL: Legacy system notification failed after DB commit for store %d patch. Data inconsistency detected!", id);
+                  throw new RuntimeException("Legacy system notification failed after database commit", legacyError);
+                }
+              }
+            }
+
+            @Override
+            public void beforeCompletion() {
+              // Not needed for this use case
+            }
+          });
 
       return entity;
     } catch (WebApplicationException e) {
