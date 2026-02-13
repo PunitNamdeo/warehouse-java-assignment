@@ -25,7 +25,7 @@ Then navigate to: **http://localhost:8080**
 - ✅ 5 REST API modules: Location, Product, Store, Warehouse, Fulfillment
 - ✅ PostgreSQL database with Hibernate ORM
 - ✅ Business rule validation and constraints
-- ✅ Unit tests (13 test cases)
+- ✅ Unit tests
 - ✅ Live reload development mode
 - ✅ Complete CRUD operations
 
