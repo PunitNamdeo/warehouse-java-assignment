@@ -99,22 +99,23 @@
    - Negative scenarios: invalid, null, empty inputs
    - Boundary conditions: format validation, capacity checks
 
-2. **StoreEndpointIT** 
-   - CRUD operations: create, read, delete, list
-   - Input validation: null, empty, missing fields
-   - Boundary conditions: special chars, long strings, unicode
+2. **StoreResourceQuantityTest + StoreResourceCoverageTest**
+  - Transaction-safety and quantity validations
+  - Resource error paths and update/patch/delete flows
+  - Boundary conditions and invalid payload handling
 
-3. **FulfillmentEndpointIT** 
-   - Association management: CRUD, multiple associations
-   - Constraint enforcement: max warehouses, max products, uniqueness
-   - Error handling: missing fields, invalid data, duplicates
-   - Boundary conditions: large IDs, zero, negative values
-   - Integration scenarios: concurrent operations, cascading deletes
+3. **FulfillmentResourceCoverageTest + AssociateWarehouseToProductStoreUseCaseQuarkusCoverageTest**
+  - Association management and fulfillment REST behavior
+  - Constraint enforcement (warehouse/store/product limits, uniqueness)
+  - Branch coverage for domain use-case validations and conflicts
 
-4. **WarehouseUseCaseTests**
-   - Create warehouse
-   - Archive warehouse
-   - Replace warehouses
+4. **WarehouseUseCase tests + Quarkus coverage suites**
+  - `CreateWarehouseUseCaseTest` and `CreateWarehouseUseCaseQuarkusCoverageTest`
+  - `ArchiveWarehouseUseCaseTest` and `ArchiveWarehouseUseCaseQuarkusCoverageTest`
+  - `ReplaceWarehouseUseCaseTest` and `ReplaceWarehouseUseCaseQuarkusCoverageTest`
+
+5. **Health Check Coverage**
+  - `FulfillmentHealthCheckCoverageTest` for liveness/status verification
 
 #### Test Organization Pattern: Given-When-Then
 
@@ -200,8 +201,8 @@ public Response createWarehouse(CreateWarehouseRequest request) {
 #### Quality Metrics Enforced:
 
 1. **JaCoCo Coverage**: Minimum 80% line coverage
-   - Enforced via Maven build failure if not met
-   - Reports available at: `target/site/jacoco/index.html`
+  - Tracked via Quarkus JaCoCo extension (`quarkus-jacoco`)
+  - Reports available at: `target/jacoco-report/index.html`
 
 2. **Code Style**:
    - Use meaningful variable names (warehouse vs w)
@@ -222,21 +223,20 @@ public Response createWarehouse(CreateWarehouseRequest request) {
 
 ### Current Coverage
 
-**Target**: 80% or above
+**Target**: 80% or above (project goal)
 
-**Coverage by Module:**
+**Current Snapshot Source:**
 
-- `domain.models.*`: 95% (critical domain objects)
-- `domain.usecases.*`: 85% (business logic)
-- `adapters.restapi.*`: 75% (HTTP handling)
-- `adapters.database.*`: 70% (persistence layer)
+- `target/jacoco-report/jacoco.csv`
+- `target/jacoco-report/index.html`
+
+Use the generated report for exact percentages, because values change as tests are added.
 
 **Command to Generate Report:**
 
 ```bash
-mvn clean test
-mvn jacoco:report
-open target/site/jacoco/index.html
+mvn clean verify
+# Open: target/jacoco-report/index.html
 ```
 
 ### Coverage Exclusions
@@ -349,7 +349,7 @@ Fixes #123
 - Positive scenarios: for valid locations
 - Negative scenarios: for invalid inputs
 - Boundary conditions: for edge cases
-Improves code coverage from 72% to 85%
+Improves domain validation and branch coverage in critical paths
 
 [FEAT] Add health check endpoint for Kubernetes liveness probes
 - Implements SmallRye Health integration
@@ -386,8 +386,8 @@ mvn test -Dtest=StoreEndpointIT
 ### Run With Code Coverage
 
 ```bash
-mvn clean test jacoco:report
-# Open report: target/site/jacoco/index.html
+mvn clean verify
+# Open report: target/jacoco-report/index.html
 ```
 
 ### Run Integration Tests Only
@@ -401,7 +401,7 @@ mvn verify -DskipUnitTests=false
 Before pushing to main:
 
 - [ ] All tests pass: `mvn clean test`
-- [ ] Code coverage >= 80%: `mvn jacoco:report`
+- [ ] Code coverage reviewed in `target/jacoco-report/index.html`
 - [ ] No compilation warnings: `mvn clean compile`
 - [ ] Health check endpoint verified locally
 - [ ] Commit message follows format

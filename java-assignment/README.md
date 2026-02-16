@@ -121,6 +121,24 @@ Follow the **[COMPLETE_DEMO_GUIDE.md](COMPLETE_DEMO_GUIDE.md)** for step-by-step
 mvn test
 ```
 
+### Run Full Verification (Recommended)
+```bash
+mvn clean verify
+```
+
+### Generate and View Coverage Report
+This project uses Quarkus JaCoCo output.
+
+```bash
+mvn clean verify
+# Open: target/jacoco-report/index.html
+```
+
+Useful coverage artifacts:
+- `target/jacoco-report/index.html`
+- `target/jacoco-report/jacoco.csv`
+- `target/jacoco-quarkus.exec`
+
 ---
 
 ## 📦 Project Structure

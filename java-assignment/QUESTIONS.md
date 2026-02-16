@@ -48,24 +48,17 @@ The warehouse module made the right choice because warehouse operations genuinel
 
 **Answer:**
 
-Testing is one of those engineering decisions where "perfection" is the enemy of "good enough." The key is being strategic about where you invest testing effort.
+I'd prioritize tests by business risk and execution speed, using a practical test pyramid.
 
-I use what I call a **value pyramid approach**. The bottom tier—unit tests on business logic—delivers the most value for the time invested. The middle tier integrates components and catches interaction bugs. The top tier validates end-to-end workflows. I'd skip trying to have high coverage everywhere and instead target the areas where defects hurt most.
+**1) Unit/business-logic tests first (highest ROI):**
+Focus on use cases where constraints and state transitions live: `CreateWarehouseUseCase`, `ReplaceWarehouseUseCase`, `ArchiveWarehouseUseCase`, and `AssociateWarehouseToProductStoreUseCase`. These tests should validate each rule independently (invalid location, duplicate business unit code, stock/capacity constraints, fulfillment association limits, etc.).
 
-**Unit tests (60% of effort):** These should focus exclusively on the use cases: `CreateWarehouseUseCase`, `ReplaceWarehouseUseCase`, `ArchiveWarehouseUseCase`, and `AssociateWarehouseToProductStoreUseCase`. Why these? Because these classes contain nearly all the business logic. Test each validation independently—does creating a warehouse with an invalid location fail correctly? Does assigning a third warehouse to the same product-store pair get rejected? These tests run fast and catch bugs early.
+**2) Targeted integration tests second:**
+Cover repository/query behavior that can silently break business flows (archived warehouse filtering, replacement persistence behavior, uniqueness/conflict behavior). Keep these focused because they are slower and more expensive to maintain.
 
-Target 90%+ coverage on the use case layer. This is where most real bugs hide, and fixing them early prevents cascading failures down the line.
+**3) API/resource tests as contract and error-mapping checks:**
+Use resource tests to confirm HTTP semantics and payload/validation behavior (201/200/204 success paths, 400/404/409 failure paths). Keep them representative, not exhaustive.
 
-**Integration tests (25% of effort):** These validate that the database and repositories work correctly. Test that an archived warehouse doesn't appear in active queries. Test that warehouse replacement actually persists both the old archived record and the new active record correctly. These tests move slower because they touch a database, so be selective about what you test—focus on the queries that are used by your business logic.
+For this codebase, the current mix is appropriate: endpoint coverage tests, focused use-case tests, and Quarkus coverage tests for branch-heavy paths. To keep coverage effective over time, I would enforce it in CI with realistic guardrails (for example: overall threshold plus stricter gates for domain/use-case packages), publish trend visibility in pull requests, and require every bug fix to add or update at least one regression test.
 
-Target 80% coverage on repositories. You don't need to test every edge case; focus on the queries that actually get called.
-
-**Endpoint tests (15% of effort):** These are smoke tests—verify that POST returns 201, that invalid input returns 400, that missing resources return 404. You're checking that the REST framework wiring works, not that the business logic works (that's what unit tests do). Keep these minimal and fast.
-
-Target 70% on REST resources.
-
-**Detecting coverage over time:** I'd set thresholds in your CI/CD pipeline. If overall coverage drops below 75% or if use case coverage drops below 85%, fail the build. This prevents death by a thousand cuts. Make it visible in pull requests—developers should see coverage trending down before it becomes a problem.
-
-**The practical reality:** This pyramid approach catches about 95% of real defects in about 40% of the time compared to trying to achieve 100% coverage everywhere. That's the sweet spot between "we found the bugs" and "we didn't spend three months writing tests."
-
-Practically speaking, the most important thing is this: if you make a code change, your unit tests should catch whether you broke the business logic. If you change a query, your integration tests should verify you didn't break the data access. Beyond that, you have diminishing returns. Invest the savings in other areas—code review, documentation, design thinking.
+The goal is not maximizing a single percentage; it is protecting critical business behavior while keeping feedback fast enough for day-to-day development.

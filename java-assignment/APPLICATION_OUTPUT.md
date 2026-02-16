@@ -118,10 +118,11 @@
 - **Status**: ✅ Implemented
 
 ## Test Results
-✅ **ALL TESTS PASSED**
+✅ **Coverage-focused and core test suites passing in latest local runs**
 - `LocationGatewayTest` - Location resolution tests
 - `LocationGatewayCoverageTest` - Location coverage tests
 - `StoreResourceQuantityTest` - Store quantity validation tests
+- `StoreResourceCoverageTest` - Store resource coverage and error-path tests
 - `CreateWarehouseUseCaseTest` - Warehouse creation validations
 - `ArchiveWarehouseUseCaseTest` - Warehouse archiving tests
 - `ReplaceWarehouseUseCaseTest` - Warehouse replacement and validations
@@ -129,6 +130,17 @@
 - `ProductEndpointTest` - Product CRUD operations
 - `ProductResourceCoverageTest` - Product resource coverage
 - `FulfillmentResourceCoverageTest` - Fulfillment endpoint coverage
+- `AssociateWarehouseToProductStoreUseCaseQuarkusCoverageTest` - Fulfillment use-case branch coverage
+- `CreateWarehouseUseCaseQuarkusCoverageTest` - Create warehouse use-case branch coverage
+- `ArchiveWarehouseUseCaseQuarkusCoverageTest` - Archive warehouse use-case branch coverage
+- `ReplaceWarehouseUseCaseQuarkusCoverageTest` - Replace warehouse use-case branch coverage
+- `FulfillmentHealthCheckCoverageTest` - Health check coverage
+
+## Coverage Reports
+- **Engine**: Quarkus JaCoCo (`quarkus-jacoco`)
+- **HTML Report**: `target/jacoco-report/index.html`
+- **CSV Summary**: `target/jacoco-report/jacoco.csv`
+- **Execution Data**: `target/jacoco-quarkus.exec`
 
 ## Database
 - **Type**: H2 (in-memory for development)
