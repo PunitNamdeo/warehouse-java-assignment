@@ -110,6 +110,8 @@ jobs:
     runs-on: ubuntu-latest
     needs: build-and-test
     if: always()
+    env:
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
     
     steps:
     - name: Checkout code
@@ -129,17 +131,23 @@ jobs:
       run: mvn -B clean verify
     
     - name: Run SonarQube Scanner
-      uses: SonarSource/sonarcloud-github-action@master
+      if: env.SONAR_TOKEN != ''
+      uses: SonarSource/sonarqube-scan-action@v5
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        SONAR_TOKEN: ${{ env.SONAR_TOKEN }}
       with:
         args: >
           -Dsonar.projectKey=warehouse-assignment
+          -Dsonar.organization=punitnamdeo
           -Dsonar.sources=java-assignment/src/main
           -Dsonar.tests=java-assignment/src/test
           -Dsonar.coverage.jacoco.xmlReportPaths=java-assignment/target/jacoco-report/jacoco.xml
       continue-on-error: true
+
+    - name: Skip SonarQube Scanner (missing SONAR_TOKEN)
+      if: env.SONAR_TOKEN == ''
+      run: echo "Skipping SonarQube scan because SONAR_TOKEN is not configured."
 
   health-check:
     runs-on: ubuntu-latest
