@@ -31,15 +31,17 @@ jobs:
     - name: Display Java version
       run: java -version
     
-    - name: Build with Maven (compile, run tests, and verify coverage)
+    - name: Build with Maven (compile, test, and generate Quarkus JaCoCo report)
       working-directory: ./java-assignment
-      run: mvn clean install -DskipTests=false
+      run: mvn -B clean verify
     
-    - name: Generate JaCoCo Code Coverage Report
+    - name: Verify JaCoCo report files exist
       working-directory: ./java-assignment
       if: always()
-      run: mvn jacoco:report
-      continue-on-error: true
+      run: |
+        test -f target/jacoco-report/jacoco.csv
+        test -f target/jacoco-report/jacoco.xml
+        test -f target/jacoco-report/index.html
     
     - name: Display Test Results Summary
       working-directory: ./java-assignment
@@ -55,8 +57,9 @@ jobs:
       if: always()
       run: |
         echo "=== Code Coverage Summary ==="
-        if [ -f target/site/jacoco/index.html ]; then
-          echo "Coverage report generated at target/site/jacoco/index.html"
+        if [ -f target/jacoco-report/index.html ]; then
+          echo "Coverage report generated at target/jacoco-report/index.html"
+          python -c "import csv; r=list(csv.DictReader(open('target/jacoco-report/jacoco.csv'))); s=lambda k:sum(int(x[k]) for x in r); im,ic,lm,lc,bm,bc=[s(k) for k in ['INSTRUCTION_MISSED','INSTRUCTION_COVERED','LINE_MISSED','LINE_COVERED','BRANCH_MISSED','BRANCH_COVERED']]; print(f'Instruction: {ic*100/(ic+im):.2f}%'); print(f'Line: {lc*100/(lc+lm):.2f}%'); print(f'Branch: {bc*100/(bc+bm):.2f}%')"
         fi
     
     - name: Upload Test Results as Artifacts
@@ -72,7 +75,7 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: jacoco-coverage-report
-        path: java-assignment/target/site/jacoco/
+        path: java-assignment/target/jacoco-report/
         retention-days: 30
     
     - name: Upload JAR Artifact
@@ -123,7 +126,7 @@ jobs:
     
     - name: Build for SonarQube Analysis
       working-directory: ./java-assignment
-      run: mvn clean install
+      run: mvn -B clean verify
     
     - name: Run SonarQube Scanner
       uses: SonarSource/sonarcloud-github-action@master
@@ -135,7 +138,7 @@ jobs:
           -Dsonar.projectKey=warehouse-assignment
           -Dsonar.sources=java-assignment/src/main
           -Dsonar.tests=java-assignment/src/test
-          -Dsonar.coverage.jacoco.xmlReportPaths=java-assignment/target/site/jacoco/jacoco.xml
+          -Dsonar.coverage.jacoco.xmlReportPaths=java-assignment/target/jacoco-report/jacoco.xml
       continue-on-error: true
 
   health-check:
