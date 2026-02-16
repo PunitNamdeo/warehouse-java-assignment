@@ -86,12 +86,6 @@ jobs:
         path: java-assignment/target/*.jar
         retention-days: 30
     
-    - name: Check if Build Successful
-      if: failure()
-      run: |
-        echo "Build failed. Please check the logs and test results above."
-        exit 1
-    
     - name: Publish Test Report Summary
       if: always()
       run: |
@@ -163,39 +157,60 @@ jobs:
       with:
         java-version: ${{ env.JAVA_VERSION }}
         distribution: 'temurin'
+        cache: maven
+
+    - name: Package Application (skip tests)
+      working-directory: ./java-assignment
+      run: mvn -B -DskipTests package
     
     - name: Start Application in Background
       working-directory: ./java-assignment
       run: |
-        mvn quarkus:dev &
-        sleep 30
+        nohup java -jar target/quarkus-app/quarkus-run.jar > app.log 2>&1 &
+        echo $! > app.pid
       timeout-minutes: 2
-      continue-on-error: true
     
     - name: Health Check
       run: |
-        # Wait for port 8080 to be listening
-        for i in {1..30}; do
+        # Wait for Quarkus health endpoint to be ready
+        for i in {1..90}; do
+          if curl -f http://localhost:8080/q/health > /dev/null 2>&1; then
+            echo "Application is healthy on /q/health"
+            curl -I http://localhost:8080/q/health
+            exit 0
+          fi
           if curl -f http://localhost:8080/health > /dev/null 2>&1; then
-            echo "Application is healthy!"
+            echo "Application is healthy on /health"
             curl -I http://localhost:8080/health
             exit 0
           fi
-          echo "Waiting for application... ($i/30)"
-          sleep 1
+          echo "Waiting for application... ($i/90)"
+          sleep 2
         done
         echo "Application health check failed"
+        if [ -f java-assignment/app.log ]; then
+          echo "=== Last 200 lines of app.log ==="
+          tail -n 200 java-assignment/app.log
+        fi
         exit 1
-      continue-on-error: true
     
     - name: Check Endpoints Availability
       run: |
         # Note: These may fail if application startup takes longer
         # This is a best-effort check
-        for endpoint in "/store" "/warehouse" "/fulfillment/warehouse-product-store" "/health"; do
-          echo "Checking /health endpoint..."
-          curl -f http://localhost:8080/health 2>/dev/null || echo "Endpoint $endpoint not responding yet"
+        for endpoint in "/store" "/warehouse" "/fulfillment/warehouse-product-store" "/q/health"; do
+          echo "Checking $endpoint endpoint..."
+          curl -f http://localhost:8080$endpoint 2>/dev/null || echo "Endpoint $endpoint not responding yet"
         done
+      continue-on-error: true
+
+    - name: Stop Application
+      if: always()
+      working-directory: ./java-assignment
+      run: |
+        if [ -f app.pid ]; then
+          kill "$(cat app.pid)" || true
+        fi
       continue-on-error: true
 
   security-scan:
