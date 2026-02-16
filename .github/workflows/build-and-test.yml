@@ -7,6 +7,10 @@ on:
     branches: [ main, develop ]
   workflow_dispatch:
 
+permissions:
+  contents: read
+  security-events: write
+
 env:
   JAVA_VERSION: '21'
   MAVEN_VERSION: '3.9.12'
@@ -165,6 +169,14 @@ jobs:
     
     - name: Start Application in Background
       working-directory: ./java-assignment
+      env:
+        QUARKUS_PROFILE: test
+        QUARKUS_HTTP_PORT: '8080'
+        QUARKUS_DATASOURCE_DB_KIND: h2
+        QUARKUS_DATASOURCE_JDBC_URL: jdbc:h2:mem:healthcheck;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+        QUARKUS_DATASOURCE_USERNAME: sa
+        QUARKUS_DATASOURCE_PASSWORD: sa
+        QUARKUS_HIBERNATE_ORM_DATABASE_GENERATION: drop-and-create
       run: |
         nohup java -jar target/quarkus-app/quarkus-run.jar > app.log 2>&1 &
         echo $! > app.pid
@@ -231,10 +243,10 @@ jobs:
       continue-on-error: true
     
     - name: Upload Trivy Results
-      uses: github/codeql-action/upload-sarif@v2
+      if: always() && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false)
+      uses: github/codeql-action/upload-sarif@v3
       with:
         sarif_file: 'trivy-results.sarif'
-      if: always()
       continue-on-error: true
 
   notify-results:
