@@ -10,7 +10,7 @@ Looking at the codebase, I notice a pragmatic mix of patterns for database acces
 
 The codebase uses three distinct patterns depending on complexity:
 
-**Simple entities** like `Product` and `Store` leverage Quarkus Panache directly—the entity classes extend `PanacheEntity` and get basic CRUD operations for free. This is the right choice here because these entities have straightforward requirements: basic create, read, update, and delete operations with minimal business logic. Panache eliminates boilerplate code beautifully for these cases.
+**Simple entities** like `Store` and `Product` use lightweight Quarkus persistence patterns with low ceremony (Store uses active record style with `PanacheEntity`; Product uses a dedicated Panache repository). This is the right choice here because these entities have straightforward requirements: basic create, read, update, and delete operations with minimal business logic. The Panache ecosystem eliminates boilerplate for these cases.
 
 **Complex entities** like `Warehouse` and `WarehouseProductStore` separate the domain model from the database representation. They use explicit `DbEntity` classes paired with repositories. This pattern is necessary because these entities have substantial business rules—warehouse replacements need to archive old records while creating new ones, fulfillment associations enforce three separate constraints, and stock management requires careful validation. The explicit separation makes it clear to new developers that "this entity has complex behavior, treat it carefully."
 
@@ -20,7 +20,7 @@ Rather than refactor, I would actually preserve this mixed approach because **it
 
 If I were to make improvements, they would be about consistency and documentation rather than wholesale refactoring:
 
-First, I'd add a style guide documenting when to apply each pattern, so future developers understand the decision-making framework. Second, I might add a few more Panache annotations to `Product` and `Store`—specifically `@Schema` for OpenAPI documentation—to improve API clarity without changing the database pattern. Third, I'd ensure all repositories have consistent query naming conventions.
+First, I'd add a style guide documenting when to apply each pattern, so future developers understand the decision-making framework. Second, I'd add OpenAPI annotations (for example `@Schema`) on API models where useful to improve contract clarity without changing the persistence approach. Third, I'd ensure all repositories have consistent query naming conventions.
 
 The bottom line is that this codebase demonstrates practical engineering: using simple solutions for simple problems and investing complexity only where it's genuinely needed. That's professional software design.
 ----
@@ -30,9 +30,9 @@ The bottom line is that this codebase demonstrates practical engineering: using 
 
 This is a great example of two legitimate API development philosophies, each with real tradeoffs. Let me walk through the decision.
 
-The **OpenAPI-first approach** used for Warehouse creates a specification file that serves as the single source of truth. This has genuine advantages: the API contract is explicit and versioned, which helps external teams integrating with your API, and code generation ensures consistency between documentation and implementation. For something as complex as warehouse operations—with multiple business rules, error states, and state transitions—this approach provides clarity that's genuinely valuable.
+The **OpenAPI-first approach** used for Warehouse creates a specification file that serves as the contract source of truth. This has genuine advantages: the API contract is explicit and versioned, which helps external teams integrating with your API, and code generation (interfaces/models) reduces manual mismatch risk between documentation and implementation. For something as complex as warehouse operations—with multiple business rules, error states, and state transitions—this approach provides clarity that's genuinely valuable.
 
-However, there's a cost. You need tooling expertise, the specification file adds maintenance burden, and there's a synchronization risk between the spec and the actual implementation. It's not the right choice for every API.
+However, there's a cost. You need tooling expertise, the specification file adds maintenance burden, and there is still synchronization risk if implementation behavior evolves without updating the spec. It's not the right choice for every API.
 
 The **code-first approach** used for Product and Store is much more agile. You write the endpoint, add some annotations, and Quarkus automatically generates Swagger documentation. There's zero boilerplate, no specification file to maintain, and you can prototype quickly. For simple CRUD operations, this is perfect—the overhead of a specification file would genuinely slow you down.
 
