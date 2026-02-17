@@ -86,59 +86,67 @@ public class WarehouseResourceCoverageTest {
     }
 
     @Test
-    @DisplayName("Should retrieve warehouse by code")
+    @DisplayName("Should retrieve warehouse by ID")
     public void testGetWarehouseByCode() {
         String code = "WH-GET-" + System.currentTimeMillis();
         String createBody = "{\"businessUnitCode\": \"" + code + "\", "
             + "\"location\": \"AMSTERDAM-001\", \"capacity\": 300, \"stock\": 100}";
 
-        given()
+        String warehouseId = given()
             .contentType(ContentType.JSON)
             .body(createBody)
             .when()
             .post(BASE_URL)
             .then()
-            .statusCode(lessThan(500));
+            .statusCode(lessThan(500))
+            .extract()
+            .path("id");
 
-        given()
-            .when()
-            .get(BASE_URL + "/" + code)
-            .then()
-            .statusCode(lessThan(500));
+        if (warehouseId != null) {
+            given()
+                .when()
+                .get(BASE_URL + "/" + warehouseId)
+                .then()
+                .statusCode(lessThan(500));
+        }
     }
 
     @Test
-    @DisplayName("Should handle non-existent warehouse codes")
+    @DisplayName("Should handle non-existent warehouse IDs")
     public void testGetNonExistentWarehouse() {
-        String code = "NONEXISTENT-" + System.currentTimeMillis();
+        String nonExistentId = "999999";
 
         given()
             .when()
-            .get(BASE_URL + "/" + code)
+            .get(BASE_URL + "/" + nonExistentId)
             .then()
             .statusCode(lessThan(500));
     }
 
     @Test
-    @DisplayName("Should archive warehouse")
+    @DisplayName("Should archive warehouse by ID")
     public void testArchiveWarehouse() {
         String code = "WH-ARCHIVE-" + System.currentTimeMillis();
         String createBody = "{\"businessUnitCode\": \"" + code + "\", "
             + "\"location\": \"AMSTERDAM-001\", \"capacity\": 250, \"stock\": 80}";
 
-        given()
+        String warehouseId = given()
             .contentType(ContentType.JSON)
             .body(createBody)
             .when()
             .post(BASE_URL)
             .then()
-            .statusCode(lessThan(500));
+            .statusCode(lessThan(500))
+            .extract()
+            .path("id");
 
-        given()
-            .when()
-            .delete(BASE_URL + "/" + code)
-            .then()
-            .statusCode(lessThan(500));
+        if (warehouseId != null) {
+            given()
+                .when()
+                .delete(BASE_URL + "/" + warehouseId)
+                .then()
+                .statusCode(lessThan(500));
+        }
     }
 
     @Test

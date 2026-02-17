@@ -6,8 +6,15 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.Matchers.notNullValue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.quarkus.test.junit.QuarkusTest;
+import jakarta.ws.rs.WebApplicationException;
+import jakarta.ws.rs.core.Response;
+import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -333,6 +340,48 @@ public class ProductResourceCoverageTest {
         .body("size()", greaterThan(0));
   }
 
+  @Test
+  @DisplayName("Should map WebApplicationException in product error mapper")
+  void testProductErrorMapperWebApplicationException() throws Exception {
+    ProductResource.ErrorMapper errorMapper = new ProductResource.ErrorMapper();
+    setField(errorMapper, "objectMapper", new ObjectMapper());
+
+    Response response = errorMapper.toResponse(new WebApplicationException("invalid request", 422));
+    ObjectNode body = (ObjectNode) response.getEntity();
+
+    assertEquals(422, response.getStatus());
+    assertEquals(422, body.get("code").asInt());
+    assertEquals("invalid request", body.get("error").asText());
+  }
+
+  @Test
+  @DisplayName("Should map runtime exception to 500 in product error mapper")
+  void testProductErrorMapperRuntimeException() throws Exception {
+    ProductResource.ErrorMapper errorMapper = new ProductResource.ErrorMapper();
+    setField(errorMapper, "objectMapper", new ObjectMapper());
+
+    Response response = errorMapper.toResponse(new IllegalStateException("unexpected"));
+    ObjectNode body = (ObjectNode) response.getEntity();
+
+    assertEquals(500, response.getStatus());
+    assertEquals(500, body.get("code").asInt());
+    assertEquals("unexpected", body.get("error").asText());
+  }
+
+  @Test
+  @DisplayName("Should omit error field when exception message is null")
+  void testProductErrorMapperNullMessage() throws Exception {
+    ProductResource.ErrorMapper errorMapper = new ProductResource.ErrorMapper();
+    setField(errorMapper, "objectMapper", new ObjectMapper());
+
+    Response response = errorMapper.toResponse(new RuntimeException((String) null));
+    ObjectNode body = (ObjectNode) response.getEntity();
+
+    assertEquals(500, response.getStatus());
+    assertEquals(500, body.get("code").asInt());
+    assertFalse(body.has("error"));
+  }
+
   private Long createProductAndReturnId(String name, String description, BigDecimal price, Integer stock) {
     Product newProduct = new Product();
     newProduct.name = name;
@@ -357,5 +406,11 @@ public class ProductResourceCoverageTest {
     String suffix = String.valueOf(System.nanoTime());
     String candidate = base + "-" + suffix;
     return candidate.length() > 40 ? candidate.substring(0, 40) : candidate;
+  }
+
+  private void setField(Object target, String fieldName, Object value) throws Exception {
+    Field field = target.getClass().getDeclaredField(fieldName);
+    field.setAccessible(true);
+    field.set(target, value);
   }
 }
