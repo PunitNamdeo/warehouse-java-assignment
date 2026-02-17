@@ -35,7 +35,7 @@ This is a **Warehouse Colocation Management System** with 4 main entities all in
 
 ### Start the Application
 ```bash
-cd C:\Users\c plus\Downloads\fcs-interview-code-assignment-main\java-assignment
+cd your-path\fcs-interview-code-assignment-main\java-assignment
 mvn quarkus:dev
 ```
 
@@ -124,7 +124,7 @@ Store 5 (MALM):
 
 ## 🧪 LIVE DEMONSTRATION SEQUENCE
 
-### **PHASE 1: Review Web UI** (2 minutes)
+### **PHASE 1: Review Web UI**
 
 #### Step 1: Open Web Dashboard
 ```
@@ -138,7 +138,7 @@ Shows:
 
 ---
 
-### **PHASE 2: PRODUCTS API DEMO** (3 minutes)
+### **PHASE 2: PRODUCTS API DEMO**
 
 #### 2.1 List All Products
 ```bash
@@ -195,7 +195,7 @@ curl -X DELETE http://localhost:8080/product/1
 
 ---
 
-### **PHASE 3: STORES API DEMO** (2 minutes)
+### **PHASE 3: STORES API DEMO**
 
 #### 3.1 List All Stores
 ```bash
@@ -255,7 +255,7 @@ curl http://localhost:8080/location/INVALID
 
 ---
 
-### **PHASE 5: WAREHOUSES API DEMO** (4 minutes) ⭐ MAIN FEATURE
+### **PHASE 5: WAREHOUSES API DEMO** ⭐ MAIN FEATURE
 
 #### 5.1 List All Warehouses
 ```bash
@@ -328,7 +328,7 @@ curl -X DELETE http://localhost:8080/warehouse/MWH.NEW01
 
 ---
 
-### **PHASE 6: FULFILLMENT API DEMO** (3 minutes) ⭐ BONUS TASK
+### **PHASE 6: FULFILLMENT API DEMO** ⭐ BONUS TASK
 
 #### 6.1 List All Associations
 ```bash
@@ -367,7 +367,7 @@ curl -X DELETE http://localhost:8080/fulfillment/warehouse-product-store/25
 
 ---
 
-### **PHASE 7: COMPREHENSIVE DATA INTEGRITY CHECK** (2 minutes)
+### **PHASE 7: COMPREHENSIVE DATA INTEGRITY CHECK**
 
 #### 7.1 Get All Products with Full Details
 ```bash
@@ -397,7 +397,7 @@ curl http://localhost:8080/fulfillment/warehouse-product-store | \
 
 ---
 
-### **PHASE 8: ERROR HANDLING DEMO** (2 minutes)
+### **PHASE 8: ERROR HANDLING DEMO**
 
 #### 8.1 Invalid Product ID
 ```bash

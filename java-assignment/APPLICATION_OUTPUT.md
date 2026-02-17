@@ -212,14 +212,6 @@
     └── FulfillmentResource.class
 ```
 
-## Git Commits (Verified)
-```
-b5e0254 - Answer reflection questions
-c7dad6a - Implement BONUS Task: Product-Warehouse-Store Association with Constraints
-3c3c224 - Implement Tasks 1-3: Location Gateway, Store Transaction Management, and Warehouse Operations
-bc47746 - Initial commit: Java warehouse management assignment
-```
-
 ## Application Ready
 - ✅ Code compiles without errors
 - ✅ All unit tests passed successfully
@@ -235,7 +227,7 @@ bc47746 - Initial commit: Java warehouse management assignment
 ### Prerequisites
 1. Start the application in dev mode: `mvn quarkus:dev`
 2. Application runs on: `http://localhost:8080`
-3. Swagger UI available at: `http://localhost:8080/q/swagger-ui.html`
+3. Swagger UI available at: `http://localhost:8080/swagger-ui`
 
 ### Location Endpoints (Task 1)
 ```
@@ -463,7 +455,7 @@ HTTP Status Codes:
 ```
 
 ### Using Swagger UI
-1. Navigate to: `http://localhost:8080/q/swagger-ui.html`
+1. Navigate to: `http://localhost:8080/swagger-ui`
 2. Click on endpoint to expand
 3. Click "Try it out" button
 4. Enter parameters and request body
