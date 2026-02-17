@@ -4,7 +4,10 @@ import java.time.LocalDateTime;
 
 public class Warehouse {
 
-  // unique identifier
+  // Database primary key (unique identifier)
+  public Long id;
+
+  // Business unit code (logical identifier)
   public String businessUnitCode;
 
   public String location;

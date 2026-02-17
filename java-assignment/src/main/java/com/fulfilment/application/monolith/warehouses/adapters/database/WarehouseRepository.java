@@ -31,7 +31,7 @@ public class WarehouseRepository implements WarehouseStore, PanacheRepository<Db
   @Override
   public void update(Warehouse warehouse) {
     var dbWarehouse =
-        this.find("businessUnitCode", warehouse.businessUnitCode).firstResultOptional();
+        this.find("businessUnitCode = ?1 and archivedAt is null", warehouse.businessUnitCode).firstResultOptional();
 
     if (dbWarehouse.isPresent()) {
       var entity = dbWarehouse.get();
@@ -45,7 +45,7 @@ public class WarehouseRepository implements WarehouseStore, PanacheRepository<Db
   @Override
   public void remove(Warehouse warehouse) {
     var dbWarehouse =
-        this.find("businessUnitCode", warehouse.businessUnitCode).firstResultOptional();
+        this.find("businessUnitCode = ?1 and archivedAt is null", warehouse.businessUnitCode).firstResultOptional();
 
     if (dbWarehouse.isPresent()) {
       var entity = dbWarehouse.get();

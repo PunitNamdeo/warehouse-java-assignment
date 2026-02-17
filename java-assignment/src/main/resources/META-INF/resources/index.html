@@ -410,8 +410,8 @@
                         <td>{{warehouse.stock}}</td>
                         <td>{{warehouse.archivedAt ? 'Yes' : 'No'}}</td>
                         <td>
-                            <button class="btn-warning" ng-click="archiveWarehouse(warehouse.businessUnitCode)" ng-disabled="warehouse.archivedAt">Archive</button>
-                            <button class="btn-danger" ng-click="deleteWarehouse(warehouse.businessUnitCode)">Delete</button>
+                            <button class="btn-warning" ng-click="archiveWarehouse(warehouse.id)" ng-disabled="warehouse.archivedAt">Archive</button>
+                            <button class="btn-danger" ng-click="deleteWarehouse(warehouse.id)">Delete</button>
                         </td>
                     </tr>
                 </tbody>
@@ -696,9 +696,9 @@
                 );
             };
 
-            $scope.archiveWarehouse = function(businessUnitCode) {
+            $scope.archiveWarehouse = function(warehouseId) {
                 if (confirm('Archive this warehouse? It will remain in database for history but cannot be used for new fulfillments.')) {
-                    $http.delete('/warehouse/' + businessUnitCode).then(
+                    $http.delete('/warehouse/' + warehouseId).then(
                         function() {
                             loadWarehouses();
                             loadFulfillment();
@@ -711,9 +711,9 @@
                 }
             };
 
-            $scope.deleteWarehouse = function(businessUnitCode) {
+            $scope.deleteWarehouse = function(warehouseId) {
                 if (confirm('Are you sure? This will also delete all associated fulfillments.')) {
-                    $http.delete('/warehouse/' + businessUnitCode).then(
+                    $http.delete('/warehouse/' + warehouseId).then(
                         function() {
                             loadWarehouses();
                             loadFulfillment();

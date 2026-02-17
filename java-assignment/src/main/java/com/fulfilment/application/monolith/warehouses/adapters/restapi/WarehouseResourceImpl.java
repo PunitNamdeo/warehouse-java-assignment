@@ -52,7 +52,10 @@ public class WarehouseResourceImpl implements WarehouseResource {
     try {
       Log.infof("Retrieving all active warehouses");
       List<Warehouse> warehouses =
-          warehouseRepository.getAll().stream().map(this::toWarehouseResponse).toList();
+          warehouseRepository.getAll().stream()
+              .filter(dbWh -> dbWh.archivedAt == null)
+              .map(this::toWarehouseResponse)
+              .toList();
       Log.infof("Retrieved %d active warehouses", warehouses.size());
       return warehouses;
     } catch (Exception e) {
@@ -103,25 +106,41 @@ public class WarehouseResourceImpl implements WarehouseResource {
   }
 
   /**
-   * Get a specific warehouse by business unit code.
+   * Get a specific warehouse by database ID (primary key).
    *
-   * @param id Business Unit Code of the warehouse
-   * @return Warehouse details if found
-   * @throws WebApplicationException with 404 Not Found if warehouse doesn't exist
+   * Uses active-only filtering (excludes archived warehouses).
+   *
+   * @param id Database primary key (Long as String) of the warehouse to retrieve
+   * @return Warehouse details if found and not archived
+   * @throws WebApplicationException with 404 Not Found if warehouse doesn't exist or is archived, or with 400 if ID is invalid
    */
   @Override
   public Warehouse getAWarehouseUnitByID(String id) {
     try {
-      Log.infof("Retrieving warehouse with Business Unit Code: %s", id);
-      var warehouse = warehouseRepository.findByBusinessUnitCode(id);
-      if (warehouse == null) {
-        Log.warnf(
-            "Warehouse with Business Unit Code '%s' not found", id);
+      Log.infof("Retrieving warehouse with ID: %s", id);
+      Long warehouseId;
+      try {
+        warehouseId = Long.parseLong(id);
+      } catch (NumberFormatException e) {
+        Log.warnf("Invalid warehouse ID format: %s", id);
         throw new WebApplicationException(
-            "Warehouse with Business Unit Code '" + id + "' not found.", 404);
+            "Invalid warehouse ID format. ID must be a valid number.", 400);
       }
-      Log.infof("Successfully retrieved warehouse: %s", id);
-      return toWarehouseResponse(warehouse);
+      
+      var dbWarehouse = warehouseRepository.findById(warehouseId);
+      if (dbWarehouse == null) {
+        Log.warnf("Warehouse with ID '%s' not found", id);
+        throw new WebApplicationException(
+            "Warehouse with ID '" + id + "' not found.", 404);
+      }
+      // Check if warehouse is archived
+      if (dbWarehouse.archivedAt != null) {
+        Log.warnf("Warehouse with ID '%s' is archived", id);
+        throw new WebApplicationException(
+            "Warehouse with ID '" + id + "' is archived.", 404);
+      }
+      Log.infof("Successfully retrieved warehouse with ID: %s", id);
+      return toWarehouseResponse(dbWarehouse.toWarehouse());
     } catch (WebApplicationException e) {
       throw e;
     } catch (Exception e) {
@@ -133,27 +152,44 @@ public class WarehouseResourceImpl implements WarehouseResource {
   /**
    * Archive a warehouse by marking it as archived (soft delete).
    * 
+   * Only active warehouses can be archived. Archives are permanent and cannot be undone.
+   * 
    * Archived warehouses:
    * - Are no longer returned in list operations
    * - Cannot be used for new fulfillment associations
    * - Retain historical data in database
    * - Retain their business unit code (preventing code reuse without replacement)
    *
-   * @param id Business Unit Code of the warehouse to archive
-   * @throws WebApplicationException with 404 Not Found if warehouse doesn't exist
+   * @param id Database primary key (Long as String) of the active warehouse to archive
+   * @throws WebApplicationException with 404 Not Found if warehouse doesn't exist or is already archived, or with 400 if ID is invalid
    */
   @Override
   @Transactional
   public void archiveAWarehouseUnitByID(String id) {
     try {
-      Log.infof("Archiving warehouse with Business Unit Code: %s", id);
-      var warehouse = warehouseRepository.findByBusinessUnitCode(id);
-      if (warehouse == null) {
-        Log.warnf(
-            "Warehouse with Business Unit Code '%s' not found for archiving", id);
+      Log.infof("Archiving warehouse with ID: %s", id);
+      Long warehouseId;
+      try {
+        warehouseId = Long.parseLong(id);
+      } catch (NumberFormatException e) {
+        Log.warnf("Invalid warehouse ID format: %s", id);
         throw new WebApplicationException(
-            "Warehouse with Business Unit Code '" + id + "' not found.", 404);
+            "Invalid warehouse ID format. ID must be a valid number.", 400);
       }
+      
+      var dbWarehouse = warehouseRepository.findById(warehouseId);
+      if (dbWarehouse == null) {
+        Log.warnf("Warehouse with ID '%s' not found for archiving", id);
+        throw new WebApplicationException(
+            "Warehouse with ID '" + id + "' not found.", 404);
+      }
+      // Check if warehouse is already archived
+      if (dbWarehouse.archivedAt != null) {
+        Log.warnf("Warehouse with ID '%s' is already archived", id);
+        throw new WebApplicationException(
+            "Warehouse with ID '" + id + "' is already archived.", 404);
+      }
+      var warehouse = dbWarehouse.toWarehouse();
       archiveWarehouseUseCase.archive(warehouse);
       Log.infof("Successfully archived warehouse: %s", id);
     } catch (WebApplicationException e) {
@@ -220,6 +256,9 @@ public class WarehouseResourceImpl implements WarehouseResource {
   private Warehouse toWarehouseResponse(
       com.fulfilment.application.monolith.warehouses.domain.models.Warehouse warehouse) {
     var response = new Warehouse();
+    if (warehouse.id != null) {
+      response.setId(String.valueOf(warehouse.id));
+    }
     response.setBusinessUnitCode(warehouse.businessUnitCode);
     response.setLocation(warehouse.location);
     response.setCapacity(warehouse.capacity);
