@@ -46,13 +46,13 @@
 
 ### 4. **Warehouse Endpoints** (Task 3)
 #### List All Warehouses
-- **Endpoint**: `GET /warehouses`
+- **Endpoint**: `GET /warehouse`
 - **Implementation**: `WarehouseResourceImpl.listAllWarehousesUnits()`
-- **Returns**: All active (non-archived) warehouses
-- **Status**: ✅ Implemented
+- **Returns**: All active (non-archived) warehouses (excludes `archivedAt != null`)
+- **Status**: ✅ Implemented with archived warehouse filtering
 
 #### Create Warehouse
-- **Endpoint**: `POST /warehouses`
+- **Endpoint**: `POST /warehouse`
 - **Implementation**: `CreateWarehouseUseCase`
 - **Validations**:
   - ✅ Business unit code uniqueness
@@ -63,18 +63,24 @@
 - **Status**: ✅ Implemented with comprehensive validations
 
 #### Get Warehouse by ID
-- **Endpoint**: `GET /warehouses/{businessUnitCode}`
-- **Implementation**: `WarehouseResourceImpl.getAWarehouseUnitByID()`
-- **Returns**: Warehouse details or HTTP 404 if not found
-- **Status**: ✅ Implemented
+- **Endpoint**: `GET /warehouse/{id}`
+- **Parameter**: `{id}` - Numeric database ID (Long), not business unit code
+- **Implementation**: `WarehouseResourceImpl.getAWarehouseUnitByID(String id)`
+- **Validation**: Accepts numeric IDs only (throws 400 if non-numeric), rejects archived warehouses (throws 404)
+- **Returns**: Warehouse details or HTTP 404 if not found or archived
+- **Status**: ✅ Implemented with strict numeric ID validation
 
 #### Archive Warehouse
-- **Endpoint**: `DELETE /warehouses/{businessUnitCode}`
+- **Endpoint**: `DELETE /warehouse/{id}`
+- **Parameter**: `{id}` - Numeric database ID (Long), not business unit code
 - **Implementation**: `ArchiveWarehouseUseCase`
-- **Logic**: Soft delete (sets `archivedAt` timestamp)
-- **Validation**: Warehouse must exist
+- **Logic**: Soft delete (sets `archivedAt` timestamp), prevents double-archive
+- **Validation**: 
+  - Warehouse must exist (throws 404 if not found)
+  - Warehouse must not be already archived (throws 404 if archived)
+  - ID must be numeric (throws 400 if non-numeric)
 - **Returns**: HTTP 204 No Content
-- **Status**: ✅ Implemented
+- **Status**: ✅ Implemented with comprehensive validation
 
 #### Replace Warehouse
 - **Endpoint**: `POST /warehouse/{businessUnitCode}/replacement`
@@ -118,7 +124,7 @@
 - **Status**: ✅ Implemented
 
 ## Test Results
-✅ **Coverage-focused and core test suites passing in latest local runs**
+✅ **Coverage-focused and core test suites passing with 21 warehouse resource tests**
 - `LocationGatewayTest` - Location resolution tests
 - `LocationGatewayCoverageTest` - Location coverage tests
 - `StoreResourceQuantityTest` - Store quantity validation tests
@@ -126,7 +132,15 @@
 - `CreateWarehouseUseCaseTest` - Warehouse creation validations
 - `ArchiveWarehouseUseCaseTest` - Warehouse archiving tests
 - `ReplaceWarehouseUseCaseTest` - Warehouse replacement and validations
-- `WarehouseResourceCoverageTest` - REST endpoint coverage
+- `WarehouseResourceImpl UnitTest (21 tests)` - REST endpoint coverage:
+  - ✅ `list_all_warehouses_success()` - Normal list operation
+  - ✅ `list_all_warehouses_excludes_archived()` - Archived warehouse filtering (NEW)
+  - ✅ `list_all_warehouses_empty()` - Empty result handling (NEW)
+  - ✅ `get_by_id_success()` - Numeric ID retrieval
+  - ✅ `get_by_id_archived_returns_404()` - Rejects archived warehouses (NEW)
+  - ✅ `archive_success()` - Warehouse archiving
+  - ✅ `archive_already_archived_returns_404()` - Double-archive prevention (NEW)
+  - ✅ Plus 14 additional comprehensive tests
 - `ProductEndpointTest` - Product CRUD operations
 - `ProductResourceCoverageTest` - Product resource coverage
 - `FulfillmentResourceCoverageTest` - Fulfillment endpoint coverage
@@ -147,8 +161,13 @@
 - **Init**: Database initialized with sample data via `import.sql`
 - **Tables**: 
   - Products (3 items: TONSTAD, KALLAX, BESTÅ)
-  - Locations (ZWOLLE-001, etc.)
-  - Warehouses (Panache entity)
+  - Locations (8 predefined: ZWOLLE-001, AMSTERDAM-001, ROTTERDAM-001, etc.)
+  - Warehouses (5 predefined with numeric IDs):
+    - ID 1: AMST.EU.001, AMSTERDAM-001, capacity 1000, stock 450
+    - ID 2: ROTT.EU.002, ROTTERDAM-001, capacity 1200, stock 520
+    - ID 3: ZWOLLE.EU.003, ZWOLLE-001, capacity 800, stock 380
+    - ID 4: TILB.EU.004, TILBURG-001, capacity 900, stock 410
+    - ID 5: UTRE.EU.005, UTRECHT-001, capacity 750, stock 320
   - Warehouse-Product-Store associations
 
 ## Architecture Components
@@ -321,10 +340,18 @@ curl http://localhost:8080/warehouse
 Response (200 OK):
 [
   {
-    "businessUnitCode": "WH-001",
-    "location": "ZWOLLE-001",
-    "capacity": 40,
-    "stock": 20
+    "businessUnitCode": "AMST.EU.001",
+    "location": "AMSTERDAM-001",
+    "capacity": 1000,
+    "stock": 450,
+    "id": 1
+  },
+  {
+    "businessUnitCode": "ROTT.EU.002",
+    "location": "ROTTERDAM-001",
+    "capacity": 1200,
+    "stock": 520,
+    "id": 2
   }
 ]
 ```
@@ -337,23 +364,24 @@ Content-Type: application/json
 curl -X POST http://localhost:8080/warehouse \
   -H "Content-Type: application/json" \
   -d '{
-    "businessUnitCode": "WH-NEW-001",
-    "location": "AMSTERDAM-001",
-    "capacity": 80,
-    "stock": 50
+    "businessUnitCode": "GRNN.EU.006",
+    "location": "GRONINGEN-001",
+    "capacity": 950,
+    "stock": 400
   }'
 
 Response (201 Created):
 {
-  "businessUnitCode": "WH-NEW-001",
-  "location": "AMSTERDAM-001",
-  "capacity": 80,
-  "stock": 50
+  "businessUnitCode": "GRNN.EU.006",
+  "location": "GRONINGEN-001",
+  "capacity": 950,
+  "stock": 400,
+  "id": 6
 }
 
 Validation Failures:
 1. Duplicate Business Unit Code (409 Conflict):
-   "Business Unit Code 'WH-NEW-001' already exists."
+   "Business Unit Code 'AMST.EU.001' already exists."
 
 2. Invalid Location (400 Bad Request):
    "Location 'INVALID-LOCATION' is not valid."
@@ -368,22 +396,28 @@ Validation Failures:
    "Maximum number of warehouses (1) has been reached for location 'ZWOLLE-001'."
 ```
 
-#### Get Warehouse by Business Unit Code
+#### Get Warehouse by Numeric ID
 ```
-GET /warehouse/{businessUnitCode}
+GET /warehouse/{id}
 
-curl http://localhost:8080/warehouse/WH-NEW-001
+curl http://localhost:8080/warehouse/1
 
 Response (200 OK):
 {
-  "businessUnitCode": "WH-NEW-001",
+  "businessUnitCode": "AMST.EU.001",
   "location": "AMSTERDAM-001",
-  "capacity": 80,
-  "stock": 50
+  "capacity": 1000,
+  "stock": 450,
+  "id": 1
 }
 
-Response (404 Not Found):
-"Warehouse with Business Unit Code 'WH-INVALID' not found."
+Error Responses:
+- 400 Bad Request (Non-numeric ID):
+  "Invalid warehouse ID format. ID must be a valid number."
+  
+- 404 Not Found (Not found or archived):
+  "Warehouse with ID '99' not found." or 
+  "Warehouse with ID '1' is archived."
 ```
 
 #### Replace Warehouse (With Enhanced Validations)
@@ -391,13 +425,13 @@ Response (404 Not Found):
 POST /warehouse/{businessUnitCode}/replacement
 Content-Type: application/json
 
-curl -X POST http://localhost:8080/warehouse/WH-NEW-001/replacement \
+curl -X POST http://localhost:8080/warehouse/AMST.EU.001/replacement \
   -H "Content-Type: application/json" \
   -d '{
-    "businessUnitCode": "WH-NEW-001",
+    "businessUnitCode": "AMST.EU.001",
     "location": "TILBURG-001",
-    "capacity": 90,
-    "stock": 50
+    "capacity": 1100,
+    "stock": 450
   }'
 
 Response (200 OK):
@@ -417,11 +451,19 @@ Validation Failures:
 
 #### Archive Warehouse (Soft Delete)
 ```
-DELETE /warehouse/{businessUnitCode}
+DELETE /warehouse/{id}
 
-curl -X DELETE http://localhost:8080/warehouse/WH-NEW-001
+curl -X DELETE http://localhost:8080/warehouse/1
 
 Response (204 No Content) - No body returned
+
+Error Responses:
+- 400 Bad Request (Non-numeric ID):
+  "Invalid warehouse ID format. ID must be a valid number."
+  
+- 404 Not Found (Already archived or not found):
+  "Warehouse with ID '1' is already archived." or
+  "Warehouse with ID '99' not found."
 ```
 
 ### Testing Transaction Safety (Store Task 2)

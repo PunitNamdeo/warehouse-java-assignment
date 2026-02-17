@@ -56,12 +56,20 @@ Listening on: http://localhost:8080
 ### 1️⃣ LOCATIONS (Pre-loaded in System)
 These are geographical areas where warehouses can be established:
 ```
-ZWOLLE-001          - Max 1 warehouse, Max 40 capacity
-AMSTERDAM-001       - Max 5 warehouses, Max 100 capacity
-TILBURG-001         - Max 1 warehouse, Max 40 capacity
-ROTTERDAM-001       - Max capacity 1000
-UTRECHT-001         - Max capacity 400
+ZWOLLE-001          - Max 1 warehouse,  Max 40 capacity      (Current: 1 warehouse)
+ZWOLLE-002          - Max 2 warehouses, Max 50 capacity      (Current: 0 warehouses)
+AMSTERDAM-001       - Max 5 warehouses, Max 100 capacity     (Current: 1 warehouse)
+AMSTERDAM-002       - Max 3 warehouses, Max 75 capacity      (Current: 0 warehouses)
+TILBURG-001         - Max 1 warehouse,  Max 40 capacity      (Current: 1 warehouse)
+HELMOND-001         - Max 1 warehouse,  Max 45 capacity      (Current: 0 warehouses)
+EINDHOVEN-001       - Max 2 warehouses, Max 70 capacity      (Current: 0 warehouses)
+ROTTERDAM-001       - Max 1 warehouse,  Max 1000 capacity    (Current: 1 warehouse)
+ROTTERDAM-002       - Max 3 warehouses, Max 2000 capacity    (Current: 0 warehouses)
+VETSBY-001          - Max 1 warehouse,  Max 90 capacity      (Current: 0 warehouses)
+UTRECHT-001         - Max 2 warehouses, Max 400 capacity     (Current: 1 warehouse)
 ```
+
+**Note:** Locations are **not** database entities but validation rules for warehouse deployment. Each warehouse must reference exactly one location.
 
 ### 2️⃣ STORES (5 Retail Stores)
 ```
@@ -84,11 +92,11 @@ ID=6 | LAPPVIKEN Door      | Price: $49.99  | Stock: 200
 
 ### 4️⃣ WAREHOUSES (5 Distribution Centers)
 ```
-MWH.001 | ZWOLLE-001      | Capacity: 500 | Stock: 150
-MWH.012 | AMSTERDAM-001   | Capacity: 800 | Stock: 200
-MWH.023 | TILBURG-001     | Capacity: 600 | Stock: 180
-MWH.034 | ROTTERDAM-001   | Capacity: 1000| Stock: 250
-MWH.045 | ROTTERDAM-001   | Capacity: 400 | Stock: 120
+ID=1 | AMST.EU.001    | AMSTERDAM-001  | Capacity: 1000 | Stock: 450
+ID=2 | ROTT.EU.002    | ROTTERDAM-001  | Capacity: 1200 | Stock: 520
+ID=3 | ZWOLLE.EU.003  | ZWOLLE-001     | Capacity: 800  | Stock: 380
+ID=4 | TILB.EU.004    | TILBURG-001    | Capacity: 900  | Stock: 410
+ID=5 | UTRE.EU.005    | UTRECHT-001    | Capacity: 750  | Stock: 320
 ```
 
 ### 5️⃣ WAREHOUSE-PRODUCT-STORE ASSOCIATIONS (Fulfillment)
@@ -100,24 +108,24 @@ MWH.045 | ROTTERDAM-001   | Capacity: 400 | Stock: 120
 **Data Mapping:**
 ```
 Store 1 (TONSTAD):
-  ├─ Fulfilled by: MWH.001, MWH.012, MWH.023 (3 warehouses)
-  └─ Products: Sofa, Shelf, Chair, Bed Frame (4 products)
+  ├─ Fulfilled by: AMST.EU.001 (ID:1), ROTT.EU.002 (ID:2), ZWOLLE.EU.003 (ID:3)
+  └─ Products: Sofa(1), Shelf(2), Chair(4), Bed Frame(5)
 
 Store 2 (KALLAX):
-  ├─ Fulfilled by: MWH.012, MWH.034 (2 warehouses)
-  └─ Products: Shelf, Chair, Cabinet, Sofa, Door (5 products)
+  ├─ Fulfilled by: ROTT.EU.002 (ID:2), TILB.EU.004 (ID:4)
+  └─ Products: Shelf(2), Chair(4), Door(6), Sofa(1), Cabinet(3)
 
 Store 3 (BESTÅ):
-  ├─ Fulfilled by: MWH.023, MWH.045 (2 warehouses)
-  └─ Products: Cabinet, Bed Frame, Door, Shelf (4 products)
+  ├─ Fulfilled by: ZWOLLE.EU.003 (ID:3), UTRE.EU.005 (ID:5)
+  └─ Products: Cabinet(3), Bed Frame(5), Door(6), Shelf(2)
 
 Store 4 (EKTORP):
-  ├─ Fulfilled by: MWH.001, MWH.034 (2 warehouses)
-  └─ Products: Chair, Door, Bed Frame, Sofa (4 products)
+  ├─ Fulfilled by: AMST.EU.001 (ID:1), TILB.EU.004 (ID:4)
+  └─ Products: Chair(4), Door(6), Bed Frame(5)
 
 Store 5 (MALM):
-  ├─ Fulfilled by: MWH.012, MWH.023, MWH.045 (3 warehouses)
-  └─ Products: Bed Frame, Shelf, Sofa, Chair, Door (5 products)
+  ├─ Fulfilled by: ROTT.EU.002 (ID:2), ZWOLLE.EU.003 (ID:3), UTRE.EU.005 (ID:5)
+  └─ Products: Bed Frame(5), Shelf(2), Sofa(1), Chair(4), Door(6)
 ```
 
 ---
@@ -262,35 +270,47 @@ curl http://localhost:8080/location/INVALID
 curl http://localhost:8080/warehouse
 ```
 
-**Shows:** All 5 warehouses with business unit codes
+**Shows:** All active (non-archived) warehouses with database IDs
 ```json
 [
   {
-    "businessUnitCode": "MWH.001",
-    "location": "ZWOLLE-001",
-    "capacity": 500,
-    "stock": 150,
-    "createdAt": "2024-07-01T00:00:00",
+    "id": "1",
+    "businessUnitCode": "AMST.EU.001",
+    "location": "AMSTERDAM-001",
+    "capacity": 1000,
+    "stock": 450,
+    "archivedAt": null
+  },
+  {
+    "id": "2",
+    "businessUnitCode": "ROTT.EU.002",
+    "location": "ROTTERDAM-001",
+    "capacity": 1200,
+    "stock": 520,
     "archivedAt": null
   },
   ...
 ]
 ```
 
-#### 5.2 Get Warehouse by ID
+**Note:** Archived warehouses (where `archivedAt` is not null) are automatically filtered from this list.
+
+#### 5.2 Get Warehouse by Numeric Database ID
 ```bash
-curl http://localhost:8080/warehouse/MWH.001
+curl http://localhost:8080/warehouse/1
 ```
+
+**Note:** Use the numeric `id` field (1, 2, 3, 4, 5) from the list response, NOT the business unit code.
 
 #### 5.3 Create New Warehouse (WITH VALIDATIONS)
 ```bash
 curl -X POST http://localhost:8080/warehouse \
   -H "Content-Type: application/json" \
   -d '{
-    "businessUnitCode": "MWH.NEW01",
+    "businessUnitCode": "AMST.EU.NEW",
     "location": "AMSTERDAM-001",
-    "capacity": 250,
-    "stock": 100
+    "capacity": 950,
+    "stock": 300
   }'
 ```
 
@@ -303,28 +323,32 @@ curl -X POST http://localhost:8080/warehouse \
 
 #### 5.4 Replace Warehouse (UNIQUE FEATURE) 🌟
 ```bash
-curl -X PUT http://localhost:8080/warehouse/MWH.001/replacement \
+curl -X POST http://localhost:8080/warehouse/AMST.EU.001/replacement \
   -H "Content-Type: application/json" \
   -d '{
-    "businessUnitCode": "MWH.001",
-    "location": "ZWOLLE-001",
-    "capacity": 600,
-    "stock": 150
+    "location": "AMSTERDAM-001",
+    "capacity": 1100,
+    "stock": 450
   }'
 ```
 
 **What Happens:**
-- ✓ Old warehouse (MWH.001) archived
+- ✓ Old warehouse (AMST.EU.001) archived
 - ✓ New warehouse created with same businessUnitCode
-- ✓ Stock transferred
-- ✓ History maintained
+- ✓ Stock transferred to new warehouse
+- ✓ Old warehouse history maintained for auditing
+- ✓ New warehouse gets new numeric ID
 
 #### 5.5 Archive Warehouse
 ```bash
-curl -X DELETE http://localhost:8080/warehouse/MWH.NEW01
+curl -X DELETE http://localhost:8080/warehouse/1
 ```
 
-**Result:** Warehouse marked as archived (not deleted)
+**What Happens:**
+- ✓ Warehouse marked as archived (soft-deleted)
+- ✓ Cannot be used for new fulfillment associations
+- ✓ Historical data retained for auditing
+- ✓ Cannot be unarchived (permanent operation)
 
 ---
 
@@ -411,13 +435,19 @@ curl http://localhost:8080/store/99999
 ```
 **Expected:** 404 Not Found
 
-#### 8.3 Invalid Warehouse
+#### 8.3 Invalid Warehouse ID (Non-Numeric)
 ```bash
-curl http://localhost:8080/warehouse/INVALID
+curl http://localhost:8080/warehouse/INVALID_ID
 ```
-**Expected:** 404 Not Found
+**Expected:** 400 Bad Request (Invalid warehouse ID format. ID must be a valid number.)
 
-#### 8.4 Duplicate Business Unit Code
+#### 8.4 Warehouse Not Found (Valid ID but doesn't exist)
+```bash
+curl http://localhost:8080/warehouse/999
+```
+**Expected:** 404 Not Found (Warehouse with ID '999' not found.)
+
+#### 8.5 Duplicate Business Unit Code
 ```bash
 curl -X POST http://localhost:8080/warehouse \
   -H "Content-Type: application/json" \

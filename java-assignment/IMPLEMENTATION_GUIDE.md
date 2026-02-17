@@ -18,12 +18,13 @@
 
 **1.2 Shared Infrastructure Costs**
 - **Challenge**: Single warehouse serves multiple stores simultaneously
-  - Example: MWH.001 in ZWOLLE-001 location serves 5 stores
+  - Example: AMST.EU.001 (ID 1) in AMSTERDAM-001 location serves multiple stores
   - Warehouse operational cost must be distributed fairly across all fulfillments
 - **Solution Implemented**:
   - Store metadata includes `quantityProductsInStock` for volume-based allocation
   - Warehouse capacity/stock fields enable proportional distribution
   - Location reference data (8 predefined locations) groups stores geographically for cost pooling
+  - Numeric warehouse IDs (1-5) enable efficient relational cost tracking
 
 **1.3 Time-Series Cost Tracking (Warehouse Replacement)**
 - **Challenge**: When warehouse is replaced:
@@ -34,6 +35,7 @@
   - Warehouse entity includes `archivedAt` timestamp (soft delete)
   - `businessUnitCode` allows warehouse replacement while maintaining history
   - Archive functionality preserves cost trail for ROI analysis
+  - Numeric database ID stored separately from business code for historical tracking
 
 **1.4 Real-time vs. Batch Processing**
 - **Challenge**: Fulfillment associations created/deleted dynamically during operations
@@ -81,10 +83,12 @@
   - Redesigning capacity allocation
   - Optimizing location assignment
 - **Solution**:
-  - Archive old warehouse for historical analysis
+  - Archive old warehouse for historical analysis (sets `archivedAt` timestamp)
   - Create new warehouse with optimized capacity
   - Reuse businessUnitCode to maintain cost continuity
-  - Analysis: Old (500 units, $45k/month) → New (700 units, $55k/month) = 12% cost/unit improvement
+  - Numeric database IDs enable audit trail tracking
+  - Analysis: Old (1000 units, capacity 1000) → New (1100 units, capacity 1100) = +10% capacity improvement
+  - Current data: AMST.EU.001 (ID 1): capacity 1000, stock 450 (45% utilization)
 
 ## 2. Software Development Best Practices Implemented
 
@@ -109,10 +113,18 @@
   - Constraint enforcement (warehouse/store/product limits, uniqueness)
   - Branch coverage for domain use-case validations and conflicts
 
-4. **WarehouseUseCase tests + Quarkus coverage suites**
+4. **WarehouseUseCase tests + Quarkus coverage suites + WarehouseResourceImplUnitTest (21 tests)**
   - `CreateWarehouseUseCaseTest` and `CreateWarehouseUseCaseQuarkusCoverageTest`
   - `ArchiveWarehouseUseCaseTest` and `ArchiveWarehouseUseCaseQuarkusCoverageTest`
   - `ReplaceWarehouseUseCaseTest` and `ReplaceWarehouseUseCaseQuarkusCoverageTest`
+  - **NEW**: `WarehouseResourceImplUnitTest` with 21 comprehensive tests:
+    - List operations: 4 tests (success, excludes archived, empty cases, failure)
+    - Get by ID: 5 tests (success, archived rejection, not found, invalid format, failure)
+    - Archive operations: 5 tests (success, already archived, not found, invalid format, failure)
+    - Create operations: 3 tests
+    - Replace operations: 3 tests
+    - Other operations: 1 test
+  - **Key new tests**: Archived warehouse filtering, double-archive prevention, numeric ID validation
 
 5. **Health Check Coverage**
   - `FulfillmentHealthCheckCoverageTest` for liveness/status verification
@@ -190,10 +202,15 @@ public Response createWarehouse(CreateWarehouseRequest request) {
 **Example Log Messages:**
 
 ```
-[INFO] Warehouse created: MWH.001 in location ZWOLLE-001 with capacity 1000
-[WARN] Validation failed: Warehouse location INVALID-999 not found
-[ERROR] Failed to create warehouse due to database error: Connection timeout
-[INFO] Association deleted: Product#3 from Store#5 via Warehouse MWH.001
+[INFO] Retrieving all active warehouses
+[INFO] Retrieved 5 active warehouses
+[INFO] Creating new warehouse with Business Unit Code: GRNN.EU.006 at Location: GRONINGEN-001
+[INFO] Successfully created warehouse: GRNN.EU.006
+[WARN] Invalid warehouse ID format: abc (Non-numeric)
+[WARN] Warehouse with ID '99' not found for archiving
+[WARN] Warehouse with ID '1' is already archived
+[ERROR] Error retrieving warehouses
+[INFO] Association deleted: Product#3 from Store#5 via Warehouse AMST.EU.001
 ```
 
 ### 2.4 Code Quality Standards
@@ -213,6 +230,11 @@ public Response createWarehouse(CreateWarehouseRequest request) {
    - RESTful naming: `/warehouse`, `/store`, `/fulfillment`
    - HTTP method semantics: POST (create), GET (read), DELETE (remove)
    - Proper status codes: 200 OK, 201 Created, 400 Bad Request, 404 Not Found, 409 Conflict
+   - **Warehouse API specifics**:
+     - `/warehouse` - Accepts numeric database IDs only (not business unit codes)
+     - Invalid numeric format returns 400 with message: "Invalid warehouse ID format. ID must be a valid number."
+     - Archived warehouses return 404 with message: "Warehouse with ID '{id}' is archived."
+     - Double-archive attempt returns 404 with message: "Warehouse with ID '{id}' is already archived."
 
 4. **Documentation**:
    - JavaDoc comments on public classes and methods

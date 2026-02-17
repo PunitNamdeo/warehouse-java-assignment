@@ -86,12 +86,19 @@ PATCH  /store/{id}                    → Update store
 
 ### Warehouse API
 ```
-GET    /warehouse                     → List all warehouses
-GET    /warehouse/{code}              → Get warehouse details
+GET    /warehouse                     → List all active (non-archived) warehouses
+GET    /warehouse/{id}                → Get warehouse by numeric database ID
 POST   /warehouse                     → Create warehouse (with validations)
-PUT    /warehouse/{code}/replacement  → Replace warehouse
-DELETE /warehouse/{code}              → Archive warehouse
+POST   /warehouse/{businessUnitCode}/replacement  → Replace warehouse by business code
+DELETE /warehouse/{id}                → Archive warehouse by numeric database ID
 ```
+
+**Notes:**
+- `{id}` is the numeric database primary key (e.g., 1, 2, 3, 4, 5)
+- `{businessUnitCode}` is the business identifier (e.g., AMST.EU.001)
+- List operation automatically filters out archived warehouses (soft-deleted)
+- Archive operation is permanent and cannot be undone
+- Archived warehouses cannot be used for new fulfillment associations
 
 ### Fulfillment API
 ```
@@ -115,11 +122,19 @@ Follow the **[COMPLETE_DEMO_GUIDE.md](COMPLETE_DEMO_GUIDE.md)** for step-by-step
 - Error handling scenarios
 - Data integrity verification
 
-
 ### Run Unit Tests
 ```bash
 mvn test
 ```
+
+**Test Coverage:**
+- WarehouseResourceImplUnitTest: 21+ comprehensive tests
+  - Create, Read, List, Replace, Archive operations
+  - Numeric ID validation (exact format checking)
+  - Archived warehouse filtering and constraints
+  - Error handling (400, 404, 500 responses)
+  - Business rule validation
+  - Repository failure scenarios
 
 ### Run Full Verification (Recommended)
 ```bash
@@ -136,6 +151,8 @@ mvn clean verify
 
 Useful coverage artifacts:
 - `target/jacoco-report/index.html`
+- `target/jacoco-report/jacoco.csv`
+- `target/jacoco-quarkus.exec`
 - `target/jacoco-report/jacoco.csv`
 - `target/jacoco-quarkus.exec`
 

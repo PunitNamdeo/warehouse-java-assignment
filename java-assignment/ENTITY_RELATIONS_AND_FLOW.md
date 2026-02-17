@@ -271,12 +271,14 @@ WAREHOUSE_PRODUCT_STORE
    └─ Only ONE association per warehouse-product-store combination
 
 Example Fulfillment Network (25 associations in demo):
-├─ ASSOCIATION #1: Product=TONSTAD Sofa, Store=TONSTAD, Warehouse=MWH.001
-├─ ASSOCIATION #2: Product=TONSTAD Sofa, Store=TONSTAD, Warehouse=MWH.012
-├─ ASSOCIATION #3: Product=TONSTAD Sofa, Store=TONSTAD, Warehouse=MWH.023
-├─ ASSOCIATION #4: Product=KALLAX Shelf, Store=TONSTAD, Warehouse=MWH.001
+├─ ASSOCIATION #1: Product=TONSTAD Sofa(1), Store=TONSTAD(1), Warehouse=AMST.EU.001
+├─ ASSOCIATION #2: Product=TONSTAD Sofa(1), Store=TONSTAD(1), Warehouse=ROTT.EU.002
+├─ ASSOCIATION #3: Product=TONSTAD Sofa(1), Store=TONSTAD(1), Warehouse=ZWOLLE.EU.003
+├─ ASSOCIATION #4: Product=KALLAX Shelf(2), Store=TONSTAD(1), Warehouse=AMST.EU.001
 ├─ ...
 └─ ASSOCIATION #25: ...
+
+(Complete mapping available above in "Data Mapping:" section)
 ```
 
 **Key Characteristics**:
@@ -310,7 +312,7 @@ FULFILLMENT NETWORK QUERIES:
 Query 1: "How is Product A distributed?"
 ├─ SELECT * FROM WAREHOUSE_PRODUCT_STORE WHERE productId=1
 ├─ Shows all (store, warehouse) pairs receiving Product A
-└─ Answer: Product 1 (Sofa) → Store 1,2,3 via Warehouse MWH.001, MWH.012, MWH.023
+└─ Answer: Product 1 (Sofa) → Store 1,2,3 via Warehouse AMST.EU.001, ROTT.EU.002, ZWOLLE.EU.003
 
 Query 2: "Which products does Store X receive?"
 ├─ SELECT DISTINCT productId FROM WAREHOUSE_PRODUCT_STORE WHERE storeId=1
@@ -318,9 +320,9 @@ Query 2: "Which products does Store X receive?"
 └─ Answer: Store 1 receives 4 products from 3 warehouses
 
 Query 3: "What's Warehouse Y inventory range?"
-├─ SELECT DISTINCT productId FROM WAREHOUSE_PRODUCT_STORE WHERE warehouseBusinessUnitCode='MWH.001'
+├─ SELECT DISTINCT productId FROM WAREHOUSE_PRODUCT_STORE WHERE warehouseBusinessUnitCode='AMST.EU.001'
 ├─ Shows all products in warehouse
-└─ Answer: MWH.001 holds 4 product types (Sofa, Shelf, Chair, Bed)
+└─ Answer: AMST.EU.001 holds 3 product types (Sofa, Shelf, Chair)
 
 Query 4: "Can I add new association?"
 ├─ Check if adding (Product X, Store Y, Warehouse Z) violates constraints
@@ -332,7 +334,122 @@ Query 4: "Can I add new association?"
 
 ---
 
-## 🔄 System Flow Diagrams
+## � Warehouse API Endpoints
+
+### **Read Operations (View Warehouses)**
+
+**List All Active Warehouses**
+```
+GET /warehouse
+├─ Returns: All warehouses where archivedAt IS NULL
+├─ Response Code: 200 OK
+└─ Response: Array of warehouse objects with:
+   ├─ id (Long as String): Numeric database primary key
+   ├─ businessUnitCode: Business identifier
+   ├─ location: Location ID
+   ├─ capacity: Maximum capacity
+   └─ stock: Current stock level
+```
+
+**Get Specific Warehouse by Numeric Database ID**
+```
+GET /warehouse/{id}
+├─ Parameter: {id} is the numeric database primary key (1, 2, 3, 4, 5)
+├─ Returns: Single warehouse object if found and active
+├─ Error Cases:
+│  ├─ 400 Bad Request: If {id} is not a valid number (e.g., "INVALID_ID")
+│  │  └─ Error Message: "Invalid warehouse ID format. ID must be a valid number."
+│  ├─ 404 Not Found: If warehouse doesn't exist
+│  │  └─ Error Message: "Warehouse with ID '<id>' not found."
+│  └─ 404 Not Found: If warehouse is archived (soft-deleted)
+│     └─ Error Message: "Warehouse with ID '<id>' is archived."
+└─ Success Response: 200 OK + warehouse object
+```
+
+### **Create Operations**
+
+**Create New Warehouse**
+```
+POST /warehouse
+├─ Request Body: {businessUnitCode, location, capacity, stock}
+├─ Validations:
+│  ├─ businessUnitCode must be unique (not already in use, even if archived)
+│  ├─ location must be valid (exists in LocationGateway)
+│  ├─ Location must not exceed max warehouses (e.g., ZWOLLE-001 max 1)
+│  ├─ Total capacity at location must not be exceeded
+│  └─ stock must be <= capacity
+├─ Response Code: 201 Created
+└─ Response: New warehouse object with auto-generated ID
+```
+
+### **Replacement Operations (Archive Old, Create New)**
+
+**Replace Warehouse by Business Unit Code**
+```
+POST /warehouse/{businessUnitCode}/replacement
+├─ Parameter: {businessUnitCode} is the business identifier (e.g., AMST.EU.001)
+├─ Request Body: {location, capacity, stock}
+├─ Process:
+│  ├─ Find active warehouse with provided businessUnitCode
+│  ├─ Archive old warehouse (set archivedAt = NOW())
+│  └─ Create new warehouse with same businessUnitCode (new ID generated)
+├─ Use Cases:
+│  ├─ Warehouse capacity increase/optimization
+│  ├─ Warehouse location change
+│  └─ Warehouse supplier/operator change (but same business unit code)
+├─ Success Response: 200 OK
+└─ Response: New warehouse object with new ID
+```
+
+### **Delete/Archive Operations**
+
+**Archive Warehouse by Numeric Database ID (Soft Delete)**
+```
+DELETE /warehouse/{id}
+├─ Parameter: {id} is the numeric database primary key (1, 2, 3, 4, 5)
+├─ Process:
+│  ├─ Find warehouse by ID
+│  └─ Set archivedAt = NOW() (soft delete, not removed from database)
+├─ Effects:
+│  ├─ Warehouse will not appear in GET /warehouse list
+│  ├─ Warehouse cannot be used for new fulfillment associations
+│  ├─ Historical fulfillment data remains queryable
+│  └─ Cannot be undone (archive is permanent)
+├─ Error Cases:
+│  ├─ 400 Bad Request: If {id} is not numeric
+│  ├─ 404 Not Found: If warehouse doesn't exist
+│  └─ 404 Not Found: If warehouse is already archived
+└─ Success Response: 204 No Content
+```
+
+### **Key Implementation Details**
+
+**Dual ID System:**
+- **Database ID (`id`)**: Auto-generated Long primary key → Used in GET/DELETE /warehouse/{id}
+  - Numeric only (1, 2, 3, 4, 5)
+  - Generated by database
+  - Unique per warehouse instance
+  
+- **Business Unit Code (`businessUnitCode`)**: Business identifier → Used in replacement endpoint
+  - Examples: AMST.EU.001, ROTT.EU.002
+  - Manually assigned
+  - Can be reused across warehouse generations (after archiving)
+
+**Lifecycle Example:**
+```
+v1: Warehouse AMST.EU.001 (id=1, capacity=1000, createdAt=2025-01-01, archivedAt=null)
+    └─ GET /warehouse/1 → Returns warehouse details
+    └─ DELETE /warehouse/1 → Archives warehouse
+    
+v2: Warehouse AMST.EU.001 (id=6, capacity=1200, createdAt=2025-02-01, archivedAt=null)
+    └─ Created via POST /warehouse/AMST.EU.001/replacement
+    └─ GET /warehouse/6 → Returns new warehouse details
+    └─ Old warehouse queryable as: SELECT * WHERE businessUnitCode='AMST.EU.001' AND archivedAt IS NOT NULL
+```
+
+---
+
+## �🔄 System Flow Diagrams
 
 ### Flow 1: Create Warehouse
 
